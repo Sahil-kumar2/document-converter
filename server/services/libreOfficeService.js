@@ -4,6 +4,8 @@ const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
+const PYTHON_SCRIPTS_DIR = path.join(__dirname, "../../python");
+
 exports.runConversion = (inputPath, outputDir, format) => {
   return new Promise((resolve, reject) => {
     const safeFormat = format.replace(/[^a-z]/gi, "").toLowerCase();
@@ -15,8 +17,9 @@ exports.runConversion = (inputPath, outputDir, format) => {
         outputDir,
         path.parse(inputPath).name + ".docx"
       );
+      const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToDocx.py");
 
-      const pyCommand = `"${PYTHON_PATH}" services/pdfToDocx.py "${inputPath}" "${outputFile}"`;
+      const pyCommand = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
       console.log("🐍 Running Python PDF→Word:", pyCommand);
 
       exec(pyCommand, (err, stdout, stderr) => {
@@ -35,8 +38,9 @@ exports.runConversion = (inputPath, outputDir, format) => {
         outputDir,
         path.parse(inputPath).name + ".xlsx"
       );
+      const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToExcel.py");
 
-      const pyCommand = `"${PYTHON_PATH}" services/pdfToExcel.py "${inputPath}" "${outputFile}"`;
+      const pyCommand = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
       console.log("🐍 Running Python PDF→Excel:", pyCommand);
 
       exec(pyCommand, (err, stdout, stderr) => {
