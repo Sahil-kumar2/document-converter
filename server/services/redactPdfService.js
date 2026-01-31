@@ -1,10 +1,10 @@
-const { PDFDocument, rgb } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const { parsePageRanges } = require('../utils/pageRangeParser');
-const { parseRedactAreas } = require('../utils/redactAreasParser');
-const { flattenPdf } = require('../utils/ghostscript');
-const pdfaPdfService = require('./pdfaPdfService');
+import { PDFDocument, rgb } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
+import { parseRedactAreas } from '../utils/redactAreasParser.js';
+import { flattenPdf } from '../utils/ghostscript.js';
+import * as pdfaPdfService from './pdfaPdfService.js';
 
 /**
  * Find bounding boxes for all occurrences of searchText using pdfjs-dist
@@ -27,7 +27,7 @@ async function findTextAreas(pdfBuffer, searchText, pageIndices) {
   };
 
   try {
-    pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
   } catch {
     console.warn = originalWarn;
     throw new Error(
@@ -233,7 +233,4 @@ async function redactPdfByAreas(inputPath, areas, options = {}) {
   });
 }
 
-module.exports = {
-  redactPdf,
-  redactPdfByAreas,
-};
+export { redactPdf, redactPdfByAreas };

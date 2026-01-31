@@ -1,8 +1,8 @@
-const { PDFDocument } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const archiver = require('archiver');
-const { parsePageRanges } = require('../utils/pageRangeParser');
+import { PDFDocument } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import archiver from 'archiver';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 /**
  * Split PDF by "each" (one PDF per page) or "range" (one PDF from page ranges).
@@ -79,4 +79,4 @@ function createZipFromFiles(filePaths, zipPath) {
   });
 }
 
-module.exports = { splitPdf };
+export { splitPdf };

@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
-const { GS_EXE } = require('../utils/ghostscript');
+import fs from 'fs';
+import path from 'path';
+import { spawn } from 'child_process';
+import { GS_EXE } from '../utils/ghostscript.js';
 
 const SUPPORTED_LEVELS = ['PDF/A-1b', 'PDF/A-2b', 'PDF/A-3b'];
 const GS_PDFA_MAP = {
@@ -60,4 +60,4 @@ function convertToPdfa(inputPath, options) {
   });
 }
 
-module.exports = { convertToPdfa, SUPPORTED_LEVELS };
+export { convertToPdfa, SUPPORTED_LEVELS };

@@ -1,8 +1,8 @@
-const cropPdfService = require('../services/cropPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as cropPdfService from '../services/cropPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/crop
@@ -53,4 +53,4 @@ async function cropPdf(req, res, next) {
   }
 }
 
-module.exports = { cropPdf };
+export { cropPdf };

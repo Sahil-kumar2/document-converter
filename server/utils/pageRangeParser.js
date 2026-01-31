@@ -45,4 +45,4 @@ function parsePageRanges(pageRanges, maxPage = Infinity) {
   return { indices: Array.from(indices).sort((a, b) => a - b) };
 }
 
-module.exports = { parsePageRanges };
+export { parsePageRanges };

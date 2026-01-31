@@ -3,9 +3,10 @@
  * On Windows uses gswin64c; on Unix uses gs.
  */
 
-const { spawn, execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { spawn, execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 const GS_EXE =
   process.env.GS_EXE ||
@@ -71,9 +72,9 @@ async function flattenPdf(inputPath, outputPath, options = {}) {
 
   // Create safe temp directory (no spaces)
   const tempDir = path.join(
-  require('os').tmpdir(),
-  `gs_flatten_${Date.now()}`
-);
+    os.tmpdir(),
+    `gs_flatten_${Date.now()}`
+  );
 
 
   fs.mkdirSync(tempDir, { recursive: true });
@@ -131,9 +132,4 @@ async function flattenPdf(inputPath, outputPath, options = {}) {
   }
 }
 
-module.exports = {
-  runGs,
-  flattenPdf,
-  assertGhostscript,
-  GS_EXE,
-};
+export { runGs, flattenPdf, assertGhostscript, GS_EXE };

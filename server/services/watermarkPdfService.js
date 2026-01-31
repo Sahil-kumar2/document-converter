@@ -1,7 +1,7 @@
-const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const { parsePageRanges } = require('../utils/pageRangeParser');
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 const DEFAULT_FONT_SIZE = 48;
 const DEFAULT_OPACITY = 0.3;
@@ -99,4 +99,4 @@ async function watermarkPdf(inputPath, options) {
   return { path: outPath };
 }
 
-module.exports = { watermarkPdf };
+export { watermarkPdf };

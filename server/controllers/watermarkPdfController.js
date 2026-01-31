@@ -1,8 +1,8 @@
-const watermarkPdfService = require('../services/watermarkPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as watermarkPdfService from '../services/watermarkPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/watermark
@@ -73,4 +73,4 @@ async function watermarkPdf(req, res, next) {
   }
 }
 
-module.exports = { watermarkPdf };
+export { watermarkPdf };

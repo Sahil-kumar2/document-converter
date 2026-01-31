@@ -1,8 +1,8 @@
-const extractPdfService = require('../services/extractPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as extractPdfService from '../services/extractPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/extract
@@ -46,4 +46,4 @@ async function extractPdf(req, res, next) {
   }
 }
 
-module.exports = { extractPdf };
+export { extractPdf };

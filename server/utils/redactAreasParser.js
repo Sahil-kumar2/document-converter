@@ -50,4 +50,4 @@ function parseRedactAreas(redactAreas, maxPage = Infinity) {
   return { areas };
 }
 
-module.exports = { parseRedactAreas };
+export { parseRedactAreas };

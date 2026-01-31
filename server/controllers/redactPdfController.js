@@ -1,8 +1,8 @@
-const redactPdfService = require('../services/redactPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as redactPdfService from '../services/redactPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/redact
@@ -60,4 +60,4 @@ async function redactPdf(req, res, next) {
   }
 }
 
-module.exports = { redactPdf };
+export { redactPdf };

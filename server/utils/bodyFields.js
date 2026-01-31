@@ -12,4 +12,4 @@ function getBodyValue(body, preferredKey) {
   return key != null ? String(body[key]).trim() : undefined;
 }
 
-module.exports = { getBodyValue };
+export { getBodyValue };

@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Delete a file. No-op if file does not exist.
@@ -23,4 +23,4 @@ function removeFiles(filePaths) {
   (filePaths || []).forEach(removeFile);
 }
 
-module.exports = { removeFile, removeFiles };
+export { removeFile, removeFiles };

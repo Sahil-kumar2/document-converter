@@ -1,6 +1,6 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 // Temp directory for uploaded PDFs (created if missing)
 const TEMP_DIR = path.join(__dirname, '..', 'temp', 'uploads');
@@ -35,4 +35,4 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
 });
 
-module.exports = { upload, TEMP_DIR };
+export { upload, TEMP_DIR };

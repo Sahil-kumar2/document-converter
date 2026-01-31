@@ -1,8 +1,8 @@
-const rotatePdfService = require('../services/rotatePdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as rotatePdfService from '../services/rotatePdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/rotate
@@ -49,4 +49,4 @@ async function rotatePdf(req, res, next) {
   }
 }
 
-module.exports = { rotatePdf };
+export { rotatePdf };

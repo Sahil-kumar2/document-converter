@@ -1,8 +1,8 @@
-const splitPdfService = require('../services/splitPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as splitPdfService from '../services/splitPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/split
@@ -64,4 +64,4 @@ async function splitPdf(req, res, next) {
   }
 }
 
-module.exports = { splitPdf };
+export { splitPdf };

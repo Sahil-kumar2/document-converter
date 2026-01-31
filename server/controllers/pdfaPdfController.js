@@ -1,8 +1,8 @@
-const pdfaPdfService = require('../services/pdfaPdfService');
-const { removeFiles } = require('../utils/cleanup');
-const { ApiError } = require('../utils/errors');
-const { getBodyValue } = require('../utils/bodyFields');
-const path = require('path');
+import * as pdfaPdfService from '../services/pdfaPdfService.js';
+import { removeFiles } from '../utils/cleanup.js';
+import { ApiError } from '../utils/errors.js';
+import { getBodyValue } from '../utils/bodyFields.js';
+import path from 'path';
 
 /**
  * POST /api/pdf/pdfa
@@ -45,4 +45,4 @@ async function convertToPdfa(req, res, next) {
   }
 }
 
-module.exports = { convertToPdfa };
+export { convertToPdfa };

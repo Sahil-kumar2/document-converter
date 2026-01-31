@@ -1,7 +1,7 @@
-const { PDFDocument, degrees } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const { parsePageRanges } = require('../utils/pageRangeParser');
+import { PDFDocument, degrees } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 const ALLOWED_ANGLES = [90, 180, 270];
 
@@ -49,4 +49,4 @@ async function rotatePdf(inputPath, options) {
   return { path: outPath };
 }
 
-module.exports = { rotatePdf };
+export { rotatePdf };

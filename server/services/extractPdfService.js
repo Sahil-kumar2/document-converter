@@ -1,7 +1,7 @@
-const { PDFDocument } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const { parsePageRanges } = require('../utils/pageRangeParser');
+import { PDFDocument } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 /**
  * Extract selected pages into a new PDF.
@@ -39,4 +39,4 @@ async function extractPdf(inputPath, options) {
   return { path: outPath, pageCount: indices.length };
 }
 
-module.exports = { extractPdf };
+export { extractPdf };

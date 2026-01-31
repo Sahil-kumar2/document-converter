@@ -1,7 +1,7 @@
-const { PDFDocument } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const { parsePageRanges } = require('../utils/pageRangeParser');
+import { PDFDocument } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 /**
  * Crop PDF by setting crop box on selected pages.
@@ -63,4 +63,4 @@ async function cropPdf(inputPath, options) {
   return { path: outPath };
 }
 
-module.exports = { cropPdf };
+export { cropPdf };
