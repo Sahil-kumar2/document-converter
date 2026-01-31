@@ -26,7 +26,7 @@ const handleSubmit = async () => {
     const a = document.createElement("a");
     a.style.display = "none";
     a.href = url;
-    a.download = `converted.${format}`;
+    a.download = `converted.${format === "jpg" ? "jpg" : format}`;
 
     document.body.appendChild(a);
     a.click();
@@ -63,10 +63,18 @@ const handleSubmit = async () => {
           onChange={(e) => setFormat(e.target.value)}
           className="w-full border rounded-lg p-2"
         >
-          <option value="pdf">Convert to PDF</option>
-          <option value="docx">Convert to Word</option>
-          <option value="xlsx">Convert to Excel</option>
+          <optgroup label="Convert to Document">
+            <option value="pdf">PDF</option>
+            <option value="docx">Word</option>
+            <option value="xlsx">Excel</option>
+          </optgroup>
+
+          <optgroup label="Convert to Image">
+            <option value="png">PNG Image</option>
+            <option value="jpg">JPG Image</option>
+          </optgroup>
         </select>
+
 
         <button
           onClick={handleSubmit}
