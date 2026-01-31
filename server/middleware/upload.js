@@ -1,5 +1,5 @@
-const multer = require("multer");
-const path = require("path");
+import multer from "multer";
+import path from "path";
 
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
 
 const allowed = [".pdf", ".docx", ".xlsx", ".pptx"];
 
-module.exports = multer({
+const upload = multer({
   storage,
   fileFilter: (_, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
@@ -18,3 +18,5 @@ module.exports = multer({
   },
   limits: { fileSize: process.env.MAX_FILE_SIZE ? Number(process.env.MAX_FILE_SIZE) : Infinity },
 });
+
+export default upload;

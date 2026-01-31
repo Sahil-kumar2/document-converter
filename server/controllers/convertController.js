@@ -1,8 +1,8 @@
-const path = require("path");
-const { runConversion } = require("../services/libreOfficeService");
-const { deleteFile } = require("../utils/fileUtils");
+import path from "path";
+import { runConversion } from "../services/libreOfficeService.js";
+import { deleteFile } from "../utils/fileUtils.js";
 
-exports.convertFile = async (req, res, next) => {
+export const convertFile = async (req, res, next) => {
   console.log("REQUEST RECEIVED");
   console.log("Body:", req.body);
   console.log("File:", req.file);

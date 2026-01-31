@@ -1,8 +1,10 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const convertRoutes = require("./routes/convertRoutes");
-const errorHandler = require("./middleware/errorHandler");
+import dotenv from "dotenv";
+import express from "express";
+import cors from "cors";
+import convertRoutes from "./routes/convertRoutes.js";
+import errorHandler from "./middleware/errorHandler.js";
+
+dotenv.config();
 
 const app = express();
 
