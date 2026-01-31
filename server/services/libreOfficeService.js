@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 const PYTHON_PATH = "C:\\Users\\sahil\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 
 // recreate __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -13,7 +14,7 @@ const PYTHON_SCRIPTS_DIR = path.join(__dirname, "../../python");
 
 export const runConversion = (inputPath, outputDir, format) => {
   return new Promise((resolve, reject) => {
-    const safeFormat = format.replace(/[^a-z]/gi, "").toLowerCase();
+    const safeFormat = format.trim().toLowerCase();
     const inputExt = path.extname(inputPath).toLowerCase();
 
     // CASE 1: PDF → DOCX
@@ -51,6 +52,32 @@ export const runConversion = (inputPath, outputDir, format) => {
 
       return;
     }
+
+    console.log("DEBUG:", inputExt, safeFormat);
+
+    // CASE: IMAGE & PDF → IMAGE (ImageMagick)
+    if (
+      [".jpg", ".jpeg", ".png", ".webp", ".pdf"].includes(inputExt) &&
+      ["png", "jpg", "jpeg"].includes(safeFormat)
+    ) {
+      const outputFile = path.join(
+        outputDir,
+        path.parse(inputPath).name + "." + safeFormat
+      );
+
+      const command = `"${MAGICK_PATH}" -density 300 "${inputPath}" "${outputFile}"`;
+      console.log("🖼 Running ImageMagick:", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log("stdout:", stdout);
+        console.log("stderr:", stderr);
+        if (err) return reject(err);
+        return resolve(outputFile);
+      });
+
+      return;
+    }
+
 
     // CASE 3: LibreOffice conversions
     const command = `soffice --headless --convert-to ${safeFormat} "${inputPath}" --outdir "${outputDir}"`;

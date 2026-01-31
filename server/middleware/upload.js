@@ -7,7 +7,11 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname)),
 });
 
-const allowed = [".pdf", ".docx", ".xlsx", ".pptx"];
+const allowed = [
+  ".pdf", ".docx", ".xlsx", ".pptx",
+  ".jpg", ".jpeg", ".png", ".webp"
+];
+
 
 const upload = multer({
   storage,
