@@ -27,31 +27,22 @@ export const convertFile = async (req, res, next) => {
     console.log("Output Directory:", outputDir);
     console.log("Converting to format:", format);
 
-    const allowedTypes = [
-      ".pdf",
-      ".docx",
-      ".xlsx",
-      ".ppt",
-      ".pptx",
-      ".png",
-      ".jpg",
-      ".jpeg",
-      ".webp"
-    ];
-    if (!allowedTypes.includes(ext)) {
-      return res.status(400).json({ error: "Unsupported file type" });
+    const conversionRules = {
+      ".pdf": ["docx", "xlsx", "png", "jpg"],
+      ".docx": ["pdf"],
+      ".xlsx": ["pdf"],
+      ".ppt": ["pdf"],
+      ".pptx": ["pdf"],
+      ".jpg": ["png"],
+      ".jpeg": ["png"],
+      ".png": ["jpg"],
+      ".webp": ["jpg", "png"]
+    };
+    if (!conversionRules[ext] || !conversionRules[ext].includes(format)) {
+      return res.status(400).json({
+        error: `Conversion from ${ext} to ${format} is not supported`
+      });
     }
-
-    // const invalidCombo =
-    //   (ext === ".docx" && format === "xlsx") ||
-    //   (ext === ".xlsx" && format === "docx") ||
-    //   (ext === ".pptx" && format === "xlsx");
-
-    // if (invalidCombo) {
-    //   return res.status(400).json({
-    //     error: "This conversion type is not supported",
-    //   });
-    // }
 
     const outputFile = await runConversion(inputPath, outputDir, format);
 
