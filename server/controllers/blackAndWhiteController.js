@@ -1,4 +1,6 @@
 import { convertToBlackWhite } from "../services/blackAndWhiteServices.js";
+import path from "path";
+import fs from "fs";
 
 export async function blackWhiteController(req, res) {
   try {
@@ -6,10 +8,21 @@ export async function blackWhiteController(req, res) {
 
     const processedPath = await convertToBlackWhite(originalPath);
 
-    res.json({
-      success: true,
-      message: "Image converted to black & white",
-      processedImage: processedPath
+    // Send the file for download
+    res.download(processedPath, "black-white-image.jpg", (err) => {
+      if (err) {
+        console.error("Download error:", err);
+      }
+      
+      // Clean up uploaded and processed files after download
+      setTimeout(() => {
+        try {
+          if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
+          if (fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
+        } catch (cleanupErr) {
+          console.error("Cleanup error:", cleanupErr);
+        }
+      }, 5000);
     });
 
   } catch (error) {

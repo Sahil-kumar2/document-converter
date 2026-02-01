@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Temp directory for uploaded PDFs (created if missing)
-const TEMP_DIR = path.join(__dirname, '..', 'temp', 'uploads');
+const TEMP_DIR = path.join(process.cwd(), 'temp', 'uploads');
 
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
@@ -35,4 +35,13 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
 });
 
-export { upload, TEMP_DIR };
+// For single file with field name flexibility
+const pdfFileFields = upload.fields([
+  { name: 'pdfFile', maxCount: 1 },
+  { name: 'pdfFile ', maxCount: 1 }
+]);
+
+// For multiple PDF files
+const pdfFilesFields = upload.array('pdfFiles', 10);
+
+export { upload, pdfFileFields, pdfFilesFields, TEMP_DIR };
