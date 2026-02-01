@@ -1,3 +1,4 @@
+
 import { extractTextFromImage } from "../services/ocr_services.js";
 
 export async function imageToText(req, res) {
