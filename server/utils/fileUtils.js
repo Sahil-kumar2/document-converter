@@ -7,11 +7,7 @@ export const deleteFile = async (p) => {
   await fs.promises.unlink(p).catch(() => {});
 };
 
-
-
-
-const uploadDir = "uploads/original";
-
+const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -21,12 +17,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() + path.extname(file.originalname);
+    const uniqueName = "temp_" + Date.now() + path.extname(file.originalname);
     cb(null, uniqueName);
   }
 });
 
 const upload = multer({ storage });
-
 export default upload;

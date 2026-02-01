@@ -3,20 +3,20 @@ import path from "path";
 import fs from "fs";
 
 export async function convertToBlackWhite(inputPath) {
-  const outputDir = "uploads/processed";
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
+  const outputDir = "uploads";
+  
   const outputPath = path.join(
     outputDir,
-    "bw_" + path.basename(inputPath)
+    "bw_" + Date.now() + path.extname(inputPath)
   );
 
   await sharp(inputPath)
-    .grayscale()   
-    .negate()      
+    .grayscale()
+    .negate()
     .toFile(outputPath);
+
+  // Original/temp image delete kar do
+  fs.unlinkSync(inputPath);
 
   return outputPath;
 }
