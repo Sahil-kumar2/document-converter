@@ -1,4 +1,4 @@
-import { convertToBlackWhite } from "../services/black_and_white_services.js";
+import { convertToBlackWhite } from "../services/blackAndWhiteServices.js";
 
 export async function blackWhiteController(req, res) {
   try {

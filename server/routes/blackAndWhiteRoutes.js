@@ -1,6 +1,6 @@
 import express from "express";
 import upload from "../utils/fileUtils.js";
-import { blackWhiteController } from "../controllers/black_and_white_controller.js";
+import { blackWhiteController } from "../controllers/blackAndWhiteController.js";
 
 const router = express.Router();
 

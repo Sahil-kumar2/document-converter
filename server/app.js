@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import convertRoutes from "./routes/convertRoutes.js";
-import blackAndWhiteRoutes from "./routes/black_and_white_routes.js";
+import blackAndWhiteRoutes from "./routes/blackAndWhiteRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import imageGenreationRoute from "./routes/imageGenerationRoutes.js"
 import excelMergeRoute from "./routes/excelMergeRoute.js";
