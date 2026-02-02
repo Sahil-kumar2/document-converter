@@ -11,6 +11,9 @@ export default function ResultPreview({
   onDownload,
   onReset,
 }) {
+  const handleShare = () => {
+    alert("Share feature coming soon! 🚀");
+  };
   if (!success && !error) return null;
 
   return (
@@ -39,12 +42,21 @@ export default function ResultPreview({
 
       <div className="flex gap-3 pt-4">
         {success && (
-          <button
-            onClick={onDownload}
-            className="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
-          >
-            ⬇️ Download File
-          </button>
+          <>
+            <button
+              onClick={onDownload}
+              className="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+            >
+              ⬇️ Download File
+            </button>
+            <button
+              onClick={handleShare}
+              title="Share feature coming soon"
+              className="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+            >
+              📤 Share
+            </button>
+          </>
         )}
         <button
           onClick={onReset}
