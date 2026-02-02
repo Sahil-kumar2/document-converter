@@ -8,6 +8,10 @@ import imageGenreationRoute from "./routes/imageGenerationRoutes.js"
 import excelMergeRoute from "./routes/excelMergeRoute.js";
 import imageToTextRoute from "./routes/imageToTextRoute.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
+import compressPdfRoutes from "./routes/compressPdfRoutes.js";
+import mergePdfRoutes from "./routes/mergePdfRoutes.js";
+import removePagesRoutes from "./routes/removePagesRoutes.js";
+import repairPdfRoutes from "./routes/repairPdfRoutes.js";
 
 dotenv.config();
 
@@ -16,7 +20,7 @@ const app = express();
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:5174"],
-    exposedHeaders: ["Content-Disposition"]
+    exposedHeaders: ["Content-Disposition", "X-Original-Size", "X-Compressed-Size"]
   })
 );
 
@@ -28,6 +32,10 @@ app.use("/api/imageGeneration", imageGenreationRoute);
 app.use("/api/imageToText", imageToTextRoute);
 app.use("/api/excel", excelMergeRoute);
 app.use("/api/pdf", pdfRoutes);
+app.use("/api/pdf", compressPdfRoutes);
+app.use("/api/pdf", mergePdfRoutes);
+app.use("/api/pdf", removePagesRoutes);
+app.use("/api/pdf", repairPdfRoutes);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>

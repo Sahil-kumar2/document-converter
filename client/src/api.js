@@ -296,6 +296,84 @@ export const generateImageFromPrompt = async (prompt) => {
 };
 
 // ============================================================
+// NEW PDF TOOLS APIs
+// ============================================================
+
+/**
+ * Compress PDF
+ * @param {File} pdfFile - PDF file to compress
+ * @param {string} compressionLevel - "low" | "medium" | "high"
+ * @returns {Promise<Blob>} - Compressed PDF
+ */
+export const compressPdf = async (pdfFile, compressionLevel = "medium") => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+  formData.append("compressionLevel", compressionLevel);
+
+  return apiClient.post("/api/pdf/compress", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Merge multiple PDFs into one
+ * @param {File[]} pdfFiles - Array of PDF files to merge (in order)
+ * @returns {Promise<Blob>} - Merged PDF
+ */
+export const mergePdfs = async (pdfFiles) => {
+  const formData = new FormData();
+  pdfFiles.forEach((file) => {
+    formData.append("pdfFiles", file);
+  });
+
+  return apiClient.post("/api/pdf/merge", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Remove specific pages from PDF
+ * @param {File} pdfFile - PDF file
+ * @param {string} pageRanges - Pages to remove. Format: "1,3,5-7"
+ * @returns {Promise<Blob>} - PDF with pages removed
+ */
+export const removePages = async (pdfFile, pageRanges) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+  formData.append("pageRanges", pageRanges);
+
+  return apiClient.post("/api/pdf/remove-pages", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Repair corrupted PDF
+ * @param {File} pdfFile - PDF file to repair
+ * @returns {Promise<Blob>} - Repaired PDF
+ */
+export const repairPdf = async (pdfFile) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+
+  return apiClient.post("/api/pdf/repair", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+// ============================================================
 // Error Handling Utility
 // ============================================================
 

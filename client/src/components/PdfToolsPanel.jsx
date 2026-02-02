@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   splitPdf,
   extractPdf,
@@ -7,6 +7,10 @@ import {
   watermarkPdf,
   redactPdf,
   convertToPdfa,
+  compressPdf,
+  mergePdfs,
+  removePages,
+  repairPdf,
 } from "../api";
 import { getErrorMessage } from "../api";
 import LoadingSpinner from "./LoadingSpinner";
@@ -33,6 +37,26 @@ export default function PdfToolsPanel() {
   const [watermarkPosition, setWatermarkPosition] = useState("center");
   const [watermarkOpacity, setWatermarkOpacity] = useState(0.3);
   const [pdfaLevel, setPdfaLevel] = useState("PDF/A-2b");
+  const [compressionLevel, setCompressionLevel] = useState("medium");
+  const [mergePdfFiles, setMergePdfFiles] = useState([]);
+  const [removePagesRange, setRemovePagesRange] = useState("");
+
+  const addUniqueFiles = (prevFiles, newFiles) => {
+    const map = new Map();
+    prevFiles.forEach((file) => {
+      map.set(`${file.name}-${file.size}-${file.lastModified}`, file);
+    });
+    newFiles.forEach((file) => {
+      map.set(`${file.name}-${file.size}-${file.lastModified}`, file);
+    });
+    return Array.from(map.values());
+  };
+
+  useEffect(() => {
+    if (activeTab === "merge" && pdfFile) {
+      setMergePdfFiles((prev) => addUniqueFiles(prev, [pdfFile]));
+    }
+  }, [activeTab, pdfFile]);
 
   const handlePdfSelect = (file) => {
     if (file.type === "application/pdf") {
@@ -63,6 +87,7 @@ export default function PdfToolsPanel() {
     setResult(null);
     setResultBlob(null);
     setPdfFile(null);
+    setMergePdfFiles([]);
   };
 
   // Split PDF
@@ -200,12 +225,137 @@ export default function PdfToolsPanel() {
     }
   };
 
+  // Compress PDF
+  const handleCompress = async () => {
+    if (!pdfFile) return;
+
+    setLoading(true);
+    try {
+      const response = await compressPdf(pdfFile, compressionLevel);
+      const originalSize = response.headers["x-original-size"];
+      const compressedSize = response.headers["x-compressed-size"];
+      
+      setResultBlob(response.data);
+      setResult({
+        success: true,
+        fileName: "compressed.pdf",
+        metadata: {
+          originalSize: originalSize ? parseInt(originalSize) : null,
+          compressedSize: compressedSize ? parseInt(compressedSize) : null,
+        },
+      });
+    } catch (error) {
+      setResult({
+        success: false,
+        error: getErrorMessage(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Merge PDFs
+  const handleMerge = async () => {
+    if (mergePdfFiles.length < 2) {
+      setResult({
+        success: false,
+        error: "Please select at least 2 PDF files to merge",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await mergePdfs(mergePdfFiles);
+      setResultBlob(response.data);
+      setResult({
+        success: true,
+        fileName: "merged.pdf",
+      });
+    } catch (error) {
+      setResult({
+        success: false,
+        error: getErrorMessage(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Remove Pages
+  const handleRemovePages = async () => {
+    if (!pdfFile || !removePagesRange) {
+      setResult({
+        success: false,
+        error: "Please enter page numbers to remove (e.g., 1,3,5-7)",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await removePages(pdfFile, removePagesRange);
+      setResultBlob(response.data);
+      setResult({
+        success: true,
+        fileName: "pages-removed.pdf",
+      });
+    } catch (error) {
+      setResult({
+        success: false,
+        error: getErrorMessage(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Repair PDF
+  const handleRepair = async () => {
+    if (!pdfFile) return;
+
+    setLoading(true);
+    try {
+      const response = await repairPdf(pdfFile);
+      setResultBlob(response.data);
+      setResult({
+        success: true,
+        fileName: "repaired.pdf",
+      });
+    } catch (error) {
+      setResult({
+        success: false,
+        error: getErrorMessage(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const tools = [
+    {
+      id: "compress",
+      name: "Compress PDF",
+      icon: "🗜️",
+      description: "Reduce PDF file size",
+    },
+    {
+      id: "merge",
+      name: "Merge PDFs",
+      icon: "🔗",
+      description: "Combine multiple PDFs into one",
+    },
     {
       id: "split",
       name: "Split PDF",
       icon: "✂️",
       description: "Split into individual pages or by ranges",
+    },
+    {
+      id: "remove",
+      name: "Remove Pages",
+      icon: "🗑️",
+      description: "Remove specific pages from PDF",
     },
     {
       id: "extract",
@@ -224,6 +374,12 @@ export default function PdfToolsPanel() {
       name: "Add Watermark",
       icon: "💧",
       description: "Add text watermark to PDF",
+    },
+    {
+      id: "repair",
+      name: "Repair PDF",
+      icon: "🔧",
+      description: "Fix corrupted PDF files",
     },
     {
       id: "pdfa",
@@ -246,7 +402,7 @@ export default function PdfToolsPanel() {
       {!result && (
         <div className="p-6 space-y-6">
           {/* Upload Area */}
-          {!pdfFile && (
+          {!pdfFile && activeTab !== "merge" && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 Select PDF File:
@@ -256,22 +412,35 @@ export default function PdfToolsPanel() {
                 acceptedTypes=".pdf"
                 disabled={loading}
               />
+                          <div className="mt-4 text-center">
+                            <p className="text-sm text-gray-600">
+                              or{" "}
+                              <button
+                                onClick={() => setActiveTab("merge")}
+                                className="text-blue-600 hover:underline font-semibold"
+                              >
+                                Merge Multiple PDFs
+                              </button>
+                            </p>
+                          </div>
             </div>
           )}
 
-          {/* File Selected - Show Tools */}
-          {pdfFile && (
+          {/* Show merge tool without file, or show other tools with file */}
+          {(pdfFile || activeTab === "merge") && (
             <>
-              <div className="bg-blue-50 p-4 rounded-lg">
+              {pdfFile && (
+                <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-700">
                   <span className="font-semibold">Selected:</span> {pdfFile.name}{" "}
                   ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
                 </p>
-              </div>
+                </div>
+              )}
 
               {/* Tool Tabs */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                {tools.map((tool) => (
+                {tools.filter(tool => pdfFile || tool.id === "merge").map((tool) => (
                   <button
                     key={tool.id}
                     onClick={() => setActiveTab(tool.id)}
@@ -294,6 +463,140 @@ export default function PdfToolsPanel() {
               {/* Tool Options Panel */}
               {activeTab && (
                 <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+                  {activeTab === "compress" && (
+                    <>
+                      <h3 className="font-semibold text-gray-900">
+                        Compress PDF
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Compression Level:
+                        </label>
+                        <select
+                          value={compressionLevel}
+                          onChange={(e) => setCompressionLevel(e.target.value)}
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                        >
+                          <option value="low">Low - Minimal compression</option>
+                          <option value="medium">Medium - Balanced</option>
+                          <option value="high">High - Maximum compression</option>
+                        </select>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Reduce file size while maintaining quality.
+                      </p>
+                      <button
+                        onClick={handleCompress}
+                        disabled={loading}
+                        className="w-full bg-purple-600 text-white py-2 rounded font-semibold hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "Compress PDF"}
+                      </button>
+                    </>
+                  )}
+
+                  {activeTab === "merge" && (
+                    <>
+                      <h3 className="font-semibold text-gray-900">
+                        Merge PDFs
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Select PDF Files (in order):
+                        </label>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          multiple
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.files || []);
+                            if (selected.length > 0) {
+                              setMergePdfFiles((prev) => addUniqueFiles(prev, selected));
+                            }
+                            e.target.value = "";
+                          }}
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                        />
+                      </div>
+                      {mergePdfFiles.length > 0 && (
+                        <div className="bg-blue-50 p-3 rounded">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">
+                            Selected Files ({mergePdfFiles.length}):
+                          </p>
+                          <ul className="text-xs text-gray-600 space-y-1">
+                            {mergePdfFiles.map((file, idx) => (
+                              <li key={idx}>
+                                {idx + 1}. {file.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <button
+                        onClick={handleMerge}
+                        disabled={loading || mergePdfFiles.length < 2}
+                        className="w-full bg-purple-600 text-white py-2 rounded font-semibold hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : `Merge ${mergePdfFiles.length} PDFs`}
+                      </button>
+                    </>
+                  )}
+
+                  {activeTab === "remove" && (
+                    <>
+                      <h3 className="font-semibold text-gray-900">
+                        Remove Pages
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Pages to Remove (e.g., 1,3,5-7):
+                        </label>
+                        <input
+                          type="text"
+                          value={removePagesRange}
+                          onChange={(e) => setRemovePagesRange(e.target.value)}
+                          placeholder="1,3,5-7"
+                          className="w-full border border-gray-300 rounded px-3 py-2"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Specify page numbers to remove from the PDF.
+                      </p>
+                      <button
+                        onClick={handleRemovePages}
+                        disabled={loading}
+                        className="w-full bg-purple-600 text-white py-2 rounded font-semibold hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "Remove Pages"}
+                      </button>
+                    </>
+                  )}
+
+                  {activeTab === "repair" && (
+                    <>
+                      <h3 className="font-semibold text-gray-900">
+                        Repair PDF
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Attempt to repair corrupted or damaged PDF files. This tool
+                        will try to recover the content and structure of your PDF.
+                      </p>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                        <p className="text-xs text-yellow-800">
+                          ⚠️ Note: Not all corrupted PDFs can be repaired. Severely
+                          damaged files may not be recoverable.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleRepair}
+                        disabled={loading}
+                        className="w-full bg-purple-600 text-white py-2 rounded font-semibold hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "Repair PDF"}
+                      </button>
+                    </>
+                  )}
+
                   {activeTab === "split" && (
                     <>
                       <h3 className="font-semibold text-gray-900">
@@ -504,6 +807,40 @@ export default function PdfToolsPanel() {
             onDownload={downloadResult}
             onReset={resetResult}
           />
+          
+          {/* Compression Stats */}
+          {result.success && result.metadata?.originalSize && (
+            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-semibold text-green-900 mb-2">
+                📊 Compression Results
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Original Size:</p>
+                  <p className="font-semibold text-gray-900">
+                    {(result.metadata.originalSize / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Compressed Size:</p>
+                  <p className="font-semibold text-green-700">
+                    {(result.metadata.compressedSize / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-gray-600">Size Reduction:</p>
+                  <p className="font-semibold text-green-700 text-lg">
+                    {(
+                      ((result.metadata.originalSize - result.metadata.compressedSize) /
+                        result.metadata.originalSize) *
+                      100
+                    ).toFixed(1)}
+                    % smaller
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
