@@ -28,7 +28,7 @@ export const convertFile = async (req, res, next) => {
     console.log("Converting to format:", format);
 
     const conversionRules = {
-      ".pdf": ["docx", "xlsx", "png", "jpg"],
+      ".pdf": ["docx", "xlsx", "png", "jpg", "html"],
       ".docx": ["pdf"],
       ".xlsx": ["pdf"],
       ".ppt": ["pdf"],
@@ -36,7 +36,8 @@ export const convertFile = async (req, res, next) => {
       ".jpg": ["png"],
       ".jpeg": ["png"],
       ".png": ["jpg"],
-      ".webp": ["jpg", "png"]
+      ".webp": ["jpg", "png"],
+      ".html": ["pdf"]
     };
     if (!conversionRules[ext] || !conversionRules[ext].includes(format)) {
       return res.status(400).json({

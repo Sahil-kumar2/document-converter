@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
 
 const allowed = [
   ".pdf", ".docx", ".xlsx", ".pptx",
-  ".jpg", ".jpeg", ".png", ".webp"
+  ".jpg", ".jpeg", ".png", ".webp", ".html"
 ];
 
 

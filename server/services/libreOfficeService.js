@@ -8,6 +8,7 @@ const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python31
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Program Files\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";
+const GHOSTSCRIPT_PATH = "C:\\Program Files\\gs\\gs10.04.0\\bin\\gswin64c.exe";
 
 // recreate __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -110,7 +111,7 @@ export const runConversion = (inputPath, outputDir, format) => {
       if (inputExt === ".pdf") {
         const outputPattern = path.join(outputDir, `${baseName}-%03d.${safeFormat}`);
 
-        const command = `"${MAGICK_PATH}" -density 300 "${inputPath}" "${outputPattern}"`;
+        const command = `"${MAGICK_PATH}" -density 300 -define pdf:use-cropbox=true -define pdf:delegate="${GHOSTSCRIPT_PATH}" "${inputPath}" "${outputPattern}"`;
         console.log("🖼 PDF → Images:", command);
 
         exec(command, async (err, stdout, stderr) => {
