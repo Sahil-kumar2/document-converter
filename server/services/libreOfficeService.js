@@ -1,10 +1,10 @@
-import { exec } from "child_process";
+  import { exec } from "child_process";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import archiver from "archiver";
 
-const PYTHON_PATH = "C:\\Users\\sahil\\AppData\\Local\\Programs\\Python\\Python313\\python.exe";
+const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Program Files\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";
@@ -19,6 +19,11 @@ export const runConversion = (inputPath, outputDir, format) => {
   return new Promise((resolve, reject) => {
     const safeFormat = format.trim().toLowerCase();
     const inputExt = path.extname(inputPath).toLowerCase();
+
+    // Ensure output directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     // CASE 1: PDF → DOCX
     if (inputExt === ".pdf" && safeFormat === "docx") {

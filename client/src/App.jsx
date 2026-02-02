@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { convertFile } from "./api";
+import { convertFile, getErrorMessage } from "./api";
+import FileUpload from "./components/FileUpload";
+import ConversionOptions from "./components/ConversionOptions";
+import ResultPreview from "./components/ResultPreview";
+import LoadingSpinner from "./components/LoadingSpinner";
+import PdfToolsPanel from "./components/PdfToolsPanel";
+import ImageToolsPanel from "./components/ImageToolsPanel";
 
 export default function App() {
   const [file, setFile] = useState(null);
   const [format, setFormat] = useState("");
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [resultBlob, setResultBlob] = useState(null);
+  const [activeTab, setActiveTab] = useState("convert");
 
   const conversionRules = {
     pdf: ["docx", "xlsx", "png", "jpg"],
@@ -15,135 +24,221 @@ export default function App() {
     jpg: ["png"],
     jpeg: ["png"],
     png: ["jpg"],
-    webp: ["jpg", "png"]
+    webp: ["jpg", "png"],
   };
 
   const getFileExtension = (filename) =>
     filename.split(".").pop().toLowerCase();
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
+  const handleFileChange = (selectedFile) => {
     if (!selectedFile) return;
 
     const ext = getFileExtension(selectedFile.name);
 
     if (!conversionRules[ext]) {
-      alert("Unsupported file type");
+      setResult({
+        success: false,
+        error: `Unsupported file type: .${ext}`,
+      });
       setFile(null);
       return;
     }
 
     setFile(selectedFile);
-    setFormat(conversionRules[ext][0]); // auto select first valid option
+    setFormat(conversionRules[ext][0]);
+    setResult(null);
+    setResultBlob(null);
   };
 
   const handleSubmit = async () => {
-    if (!file) return alert("Please select a file");
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("targetFormat", format);
+    if (!file) return;
 
     setLoading(true);
-
     try {
-      const res = await convertFile(formData);
-      const blob = new Blob([res.data]);
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = `converted.${format}`;
-      document.body.appendChild(a);
-      a.click();
-
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
+      const response = await convertFile(file, format);
+      setResultBlob(response.data);
+      setResult({
+        success: true,
+        fileName: `converted.${format}`,
+      });
     } catch (err) {
-      console.error("Download error:", err);
-      alert(err.response?.data?.error || "Conversion failed");
+      setResult({
+        success: false,
+        error: getErrorMessage(err),
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handleDownload = () => {
+    if (!resultBlob) return;
+
+    const url = window.URL.createObjectURL(resultBlob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = result.fileName;
+    document.body.appendChild(a);
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleReset = () => {
+    setFile(null);
+    setFormat("");
+    setResult(null);
+    setResultBlob(null);
   };
 
   const ext = file ? getFileExtension(file.name) : null;
   const options = ext ? conversionRules[ext] : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">📄</span>
+            <div>
+              <h1 className="text-4xl font-extrabold">Document Converter</h1>
+              <p className="text-blue-100 text-lg">
+                Convert & manipulate files online with ease
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      {/* Header Section */}
-      <div className="text-center mt-14">
-        <h1 className="text-5xl font-extrabold text-gray-800">
-          File Converter
-        </h1>
-        <p className="text-gray-500 mt-3 text-lg">
-          Easily convert files from one format to another, online.
-        </p>
-      </div>
-
-      {/* Upload Area */}
-      <div className="mt-16 w-full max-w-4xl border-2 border-dashed border-blue-200 bg-white rounded-xl p-12 text-center shadow-sm">
-
-        {/* Hidden File Input */}
-        <input
-          type="file"
-          id="fileInput"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-
-        {/* Choose Files Button */}
-        <label
-          htmlFor="fileInput"
-          className="inline-flex items-center gap-3 bg-blue-600 text-white px-8 py-4 rounded-lg text-xl font-semibold cursor-pointer hover:bg-blue-700 transition"
-        >
-          📂 Choose Files
-        </label>
-
-        {file && (
-          <p className="mt-4 text-gray-600">
-            Selected: <span className="font-medium">{file.name}</span>
-          </p>
-        )}
-
-        {/* Format Selector appears only after file */}
-        {file && (
-          <div className="mt-8">
-            <select
-              value={format}
-              onChange={(e) => setFormat(e.target.value)}
-              className="border p-3 rounded-lg text-lg w-64"
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+          {[
+            { id: "convert", name: "🔄 Quick Convert", icon: "convert" },
+            { id: "pdf", name: "🔧 PDF Tools", icon: "pdf" },
+            { id: "image", name: "🖼️ Image Tools", icon: "image" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-slate-700 text-gray-300 hover:bg-slate-600"
+              }`}
             >
-              {options.map((opt) => (
-                <option key={opt} value={opt}>
-                  Convert to {opt.toUpperCase()}
-                </option>
-              ))}
-            </select>
+              {tab.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Quick Convert Tab */}
+        {activeTab === "convert" && (
+          <div className="bg-white rounded-xl shadow-lg p-8 space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                🚀 Quick File Converter
+              </h2>
+              <p className="text-gray-600">
+                Convert files between different formats instantly
+              </p>
+            </div>
+
+            {/* Upload Section */}
+            {!file && !result && (
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Select your file:
+                </label>
+                <FileUpload
+                  onFileSelect={handleFileChange}
+                  disabled={loading}
+                />
+              </div>
+            )}
+
+            {/* Conversion Options */}
+            {file && !result && (
+              <div className="space-y-6">
+                <ConversionOptions
+                  file={file}
+                  selectedFormat={format}
+                  onFormatChange={setFormat}
+                  disabled={loading}
+                />
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Converting..." : "Convert File"}
+                </button>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {loading && <LoadingSpinner message="Converting your file..." />}
+
+            {/* Result */}
+            {result && (
+              <ResultPreview
+                success={result.success}
+                error={result.error}
+                fileName={result.fileName}
+                onDownload={handleDownload}
+                onReset={handleReset}
+              />
+            )}
+
+            {/* Supported Formats Info */}
+            {!file && !result && (
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-4">
+                  Supported Conversions:
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-blue-800">
+                  <div>
+                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG
+                  </div>
+                  <div>
+                    <strong>DOCX:</strong> PDF
+                  </div>
+                  <div>
+                    <strong>XLSX:</strong> PDF
+                  </div>
+                  <div>
+                    <strong>PPT/PPTX:</strong> PDF
+                  </div>
+                  <div>
+                    <strong>Images:</strong> PNG, JPG, WebP conversions
+                  </div>
+                  <div>
+                    <strong>Max Size:</strong> 1GB per file
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Convert Button */}
-        {file && (
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="mt-8 bg-indigo-600 text-white px-10 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
-          >
-            {loading ? "Converting..." : "Convert File"}
-          </button>
-        )}
+        {/* PDF Tools Tab */}
+        {activeTab === "pdf" && <PdfToolsPanel />}
 
-        {/* Footer Info */}
-        <p className="text-gray-400 text-sm mt-6">
-          Max file size 1GB. By proceeding, you agree to our Terms of Use.
+        {/* Image Tools Tab */}
+        {activeTab === "image" && <ImageToolsPanel />}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-gray-400 text-center py-6 mt-16 border-t border-slate-700">
+        <p>
+          Document Converter © 2026 • Secure • Fast • No registration required
         </p>
-      </div>
+      </footer>
     </div>
   );
-
 }
