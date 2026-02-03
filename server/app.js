@@ -12,6 +12,7 @@ import compressPdfRoutes from "./routes/compressPdfRoutes.js";
 import mergePdfRoutes from "./routes/mergePdfRoutes.js";
 import removePagesRoutes from "./routes/removePagesRoutes.js";
 import repairPdfRoutes from "./routes/repairPdfRoutes.js";
+import routesIndex from "./routes/index.js";
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/pdf", compressPdfRoutes);
 app.use("/api/pdf", mergePdfRoutes);
 app.use("/api/pdf", removePagesRoutes);
 app.use("/api/pdf", repairPdfRoutes);
+app.use("/api", routesIndex);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>

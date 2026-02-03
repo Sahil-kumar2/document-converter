@@ -6,7 +6,7 @@ import path from 'path';
 
 /**
  * POST /api/pdf/crop
- * Body: pdfFile, pageNumbers (optional), cropBox: x, y, width, height
+ * Body: pdfFile, mode ("current_page" | "all_pages"), pageNumber (for current_page), cropBox: x, y, width, height
  */
 async function cropPdf(req, res, next) {
   const uploadedPath = req.file?.path;
@@ -26,10 +26,15 @@ async function cropPdf(req, res, next) {
     });
   }
 
+  // Support both old (pageNumbers) and new (mode + pageNumber) formats
+  const mode = (getBodyValue(req.body, 'mode') ?? req.body?.mode ?? '').toLowerCase();
+  const pageNumber = parseInt(getBodyValue(req.body, 'pageNumber') ?? req.body?.pageNumber ?? '1');
   const pageNumbers = getBodyValue(req.body, 'pageNumbers');
 
   try {
     const result = await cropPdfService.cropPdf(uploadedPath, {
+      mode: mode || undefined,
+      pageNumber: pageNumber || undefined,
       pageNumbers: pageNumbers || undefined,
       cropBox: { x, y, width, height },
     });

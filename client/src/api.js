@@ -118,13 +118,23 @@ export const rotatePdf = async (pdfFile, rotationAngle, pageNumbers = null) => {
  * @param {string} [pageNumbers] - Optional specific pages
  * @returns {Promise<Blob>} - Cropped PDF
  */
-export const cropPdf = async (pdfFile, x, y, width, height, pageNumbers = null) => {
+export const cropPdf = async (pdfFile, x, y, width, height, mode = null, pageNumber = null, pageNumbers = null) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
   formData.append("cropX", x);
   formData.append("cropY", y);
   formData.append("cropWidth", width);
   formData.append("cropHeight", height);
+  
+  // Support new mode-based format
+  if (mode) {
+    formData.append("mode", mode);
+    if (mode === "current_page" && pageNumber) {
+      formData.append("pageNumber", pageNumber);
+    }
+  }
+  
+  // Legacy support for pageNumbers
   if (pageNumbers) {
     formData.append("pageNumbers", pageNumbers);
   }
@@ -183,14 +193,19 @@ export const watermarkPdf = async (
  */
 export const redactPdf = async (
   pdfFile,
+  redactions = [],
   redactText = null,
-  redactAreas = null,
   pageNumbers = null
 ) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
+  
+  // If redactions array is provided, stringify and send as redactAreas
+  if (redactions && redactions.length > 0) {
+    formData.append("redactAreas", JSON.stringify(redactions));
+  }
+  
   if (redactText) formData.append("redactText", redactText);
-  if (redactAreas) formData.append("redactAreas", redactAreas);
   if (pageNumbers) formData.append("pageNumbers", pageNumbers);
 
   return apiClient.post("/api/pdf/redact", formData, {
@@ -366,6 +381,66 @@ export const repairPdf = async (pdfFile) => {
   formData.append("pdfFile", pdfFile);
 
   return apiClient.post("/api/pdf/repair", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Sign PDF (text or image)
+ * @param {File} pdfFile - PDF file
+ * @param {{
+ *  signatureText?: string,
+ *  signatureImage?: string,
+ *  pageNumber?: number,
+ *  position?: string,
+ *  x?: number,
+ *  y?: number,
+ *  fontSize?: number,
+ *  color?: string,
+ *  width?: number,
+ *  height?: number
+ * }} payload
+ * @returns {Promise<Blob>} - Signed PDF
+ */
+export const signPdf = async (pdfFile, payload = {}) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, value);
+    }
+  });
+
+  return apiClient.post("/api/pdf/sign", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Organize PDF (reorder or remove pages)
+ * @param {File} pdfFile - PDF file
+ * @param {{ pageOrder?: number[], pagesToRemove?: string }} payload
+ * @returns {Promise<Blob>} - Organized PDF
+ */
+export const organizePdf = async (pdfFile, payload = {}) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+
+  if (payload.pageOrder) {
+    formData.append("pageOrder", JSON.stringify(payload.pageOrder));
+  }
+  if (payload.pagesToRemove) {
+    formData.append("pagesToRemove", payload.pagesToRemove);
+  }
+
+  return apiClient.post("/api/pdf/organize", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

@@ -6,11 +6,11 @@ import { parsePageRanges } from '../utils/pageRangeParser.js';
 /**
  * Crop PDF by setting crop box on selected pages.
  * @param {string} inputPath - Path to uploaded PDF
- * @param {{ pageNumbers?: string, cropBox: { x: number, y: number, width: number, height: number } }} options
+ * @param {{ mode?: string, pageNumber?: number, pageNumbers?: string, cropBox: { x: number, y: number, width: number, height: number } }} options
  * @returns {Promise<{ path: string }>}
  */
 async function cropPdf(inputPath, options) {
-  const { pageNumbers, cropBox } = options;
+  const { mode, pageNumber, pageNumbers, cropBox } = options;
   const { x, y, width, height } = cropBox;
 
   if (
@@ -33,12 +33,26 @@ async function cropPdf(inputPath, options) {
   }
 
   let indices;
-  if (pageNumbers && pageNumbers.trim()) {
+  
+  // Handle mode-based cropping (new format)
+  if (mode === 'all_pages') {
+    indices = Array.from({ length: totalPages }, (_, i) => i);
+  } else if (mode === 'current_page') {
+    const pageIdx = (pageNumber || 1) - 1; // Convert to 0-based index
+    if (pageIdx < 0 || pageIdx >= totalPages) {
+      throw new Error(`Page number ${pageNumber} is out of range (1-${totalPages})`);
+    }
+    indices = [pageIdx];
+  } 
+  // Handle legacy pageNumbers format
+  else if (pageNumbers && pageNumbers.trim()) {
     const parsed = parsePageRanges(pageNumbers, totalPages);
     if (parsed.error) throw new Error(parsed.error);
     if (parsed.indices.length === 0) throw new Error('No valid pages in pageNumbers');
     indices = parsed.indices;
-  } else {
+  } 
+  // Default: crop all pages
+  else {
     indices = Array.from({ length: totalPages }, (_, i) => i);
   }
 

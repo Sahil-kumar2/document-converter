@@ -15,10 +15,10 @@ async function redactPdf(req, res, next) {
   }
 
   const redactText = getBodyValue(req.body, 'redactText');
-  const redactAreas = getBodyValue(req.body, 'redactAreas');
+  const redactAreasStr = getBodyValue(req.body, 'redactAreas');
 
   const hasText = redactText && redactText.trim().length > 0;
-  const hasAreas = redactAreas && redactAreas.trim().length > 0;
+  const hasAreas = redactAreasStr && redactAreasStr.trim().length > 0;
 
   if (!hasText && !hasAreas) {
     return res.status(400).json({
@@ -27,19 +27,33 @@ async function redactPdf(req, res, next) {
     });
   }
 
+  // Parse JSON redactAreas string into array
+  let redactAreas = null;
+  if (hasAreas) {
+    try {
+      redactAreas = JSON.parse(redactAreasStr);
+      if (!Array.isArray(redactAreas)) {
+        return res.status(400).json({
+          success: false,
+          error: 'redactAreas must be a JSON array',
+        });
+      }
+    } catch (parseErr) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid redactAreas JSON format',
+      });
+    }
+  }
+
   const pageNumbers = getBodyValue(req.body, 'pageNumbers');
   const convertToPdfaRaw = getBodyValue(req.body, 'convertToPdfa');
   const convertToPdfa = convertToPdfaRaw === 'true' || convertToPdfaRaw === '1' || req.body?.convertToPdfa === true;
   const pdfaLevel = getBodyValue(req.body, 'pdfaLevel') || req.body?.pdfaLevel;
 
   try {
-    const result = await redactPdfService.redactPdf(uploadedPath, {
-      redactText: hasText ? redactText : undefined,
-      redactAreas: hasAreas ? redactAreas : undefined,
-      pageNumbers: pageNumbers || undefined,
-      convertToPdfa: convertToPdfa || undefined,
-      pdfaLevel: convertToPdfa ? (pdfaLevel || 'PDF/A-1b') : undefined,
-    });
+    // Pass redactAreas array directly to service
+    const result = await redactPdfService.redactPdf(uploadedPath, redactAreas);
 
     const outPath = result.path;
     const filename = path.basename(outPath);
