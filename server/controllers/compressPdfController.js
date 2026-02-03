@@ -18,8 +18,8 @@ export async function compressPdf(req, res, next) {
   }
   
   const compressionLevel = (
-    getBodyValue(req.body, 'compressionLevel') ||
-    req.body?.compressionLevel ||
+    getBodyValue(req.body, 'compressionLevel') ??
+    req.body?.compressionLevel ??
     'medium'
   ).toLowerCase();
   
