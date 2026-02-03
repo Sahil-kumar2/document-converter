@@ -98,7 +98,25 @@ export const runConversion = (inputPath, outputDir, format) => {
       return;
     }
 
+    // CASE: IMAGE → PDF (Scan to PDF)
+    if (
+      [".jpg", ".jpeg", ".png", ".webp"].includes(inputExt) &&
+      safeFormat === "pdf"
+    ) {
+      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
 
+      const command = `"${MAGICK_PATH}" convert "${inputPath}" -quality 100 "${outputFile}"`;
+      console.log("📄 Image → PDF (Scan):", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log("stdout:", stdout);
+        console.log("stderr:", stderr);
+        if (err) return reject(err);
+        resolve(outputFile);
+      });
+
+      return;
+    }
 
     // CASE: IMAGE & PDF → IMAGE
     if (

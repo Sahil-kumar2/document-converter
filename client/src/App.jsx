@@ -6,6 +6,7 @@ import ResultPreview from "./components/ResultPreview";
 import LoadingSpinner from "./components/LoadingSpinner";
 import PdfToolsPanel from "./components/PdfToolsPanel";
 import ImageToolsPanel from "./components/ImageToolsPanel";
+import ScanToPdfPanel from "./components/ScanToPdfPanel";
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -16,7 +17,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("convert");
 
   const conversionRules = {
-    pdf: ["docx", "xlsx", "png", "jpg"],
+    pdf: ["docx", "xlsx", "png", "jpg", "html"],
+    html: ["pdf"],
     docx: ["pdf"],
     xlsx: ["pdf"],
     ppt: ["pdf"],
@@ -57,9 +59,16 @@ export default function App() {
     try {
       const response = await convertFile(file, format);
       setResultBlob(response.data);
+      const ext = file.name.split(".").pop().toLowerCase();
+
+      const downloadName =
+        ext === "pdf" && ["png", "jpg", "jpeg"].includes(format)
+          ? "pages.zip"
+          : `converted.${format}`;
+
       setResult({
         success: true,
-        fileName: `converted.${format}`,
+        fileName: downloadName,
       });
     } catch (err) {
       setResult({
@@ -121,6 +130,7 @@ export default function App() {
             { id: "convert", name: "🔄 Quick Convert", icon: "convert" },
             { id: "pdf", name: "🔧 PDF Tools", icon: "pdf" },
             { id: "image", name: "🖼️ Image Tools", icon: "image" },
+            { id: "scan", name: "📷 Scan to PDF", icon: "scan" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -203,7 +213,10 @@ export default function App() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-blue-800">
                   <div>
-                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG
+                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG, HTML
+                  </div>
+                  <div>
+                    <strong>HTML:</strong> PDF
                   </div>
                   <div>
                     <strong>DOCX:</strong> PDF
@@ -231,6 +244,9 @@ export default function App() {
 
         {/* Image Tools Tab */}
         {activeTab === "image" && <ImageToolsPanel />}
+
+        {activeTab === "scan" && <ScanToPdfPanel />}
+
       </main>
 
       {/* Footer */}

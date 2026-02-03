@@ -33,10 +33,10 @@ export const convertFile = async (req, res, next) => {
       ".xlsx": ["pdf"],
       ".ppt": ["pdf"],
       ".pptx": ["pdf"],
-      ".jpg": ["png"],
-      ".jpeg": ["png"],
-      ".png": ["jpg"],
-      ".webp": ["jpg", "png"],
+      ".jpg": ["png", "pdf"],
+      ".jpeg": ["png", "pdf"],
+      ".png": ["jpg", "pdf"],
+      ".webp": ["jpg", "png", "pdf"],
       ".html": ["pdf"]
     };
     if (!conversionRules[ext] || !conversionRules[ext].includes(format)) {
