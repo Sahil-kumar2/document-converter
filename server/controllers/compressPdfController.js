@@ -23,6 +23,7 @@ export async function compressPdf(req, res, next) {
     'medium'
   ).toLowerCase();
   
+  
   if (!['low', 'medium', 'high'].includes(compressionLevel)) {
     return res.status(400).json({
       success: false,

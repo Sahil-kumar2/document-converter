@@ -39,6 +39,7 @@ const upload = multer({
 const pdfFileFields = upload.fields([
   { name: 'pdfFile', maxCount: 1 },
   { name: 'pdfFile ', maxCount: 1 }
+  
 ]);
 
 // For multiple PDF files

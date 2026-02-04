@@ -13,6 +13,7 @@ import mergePdfRoutes from "./routes/mergePdfRoutes.js";
 import removePagesRoutes from "./routes/removePagesRoutes.js";
 import repairPdfRoutes from "./routes/repairPdfRoutes.js";
 import routesIndex from "./routes/index.js";
+import lockDocRoute from "./routes/lockDocumentRoutes.js";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use("/api/pdf", mergePdfRoutes);
 app.use("/api/pdf", removePagesRoutes);
 app.use("/api/pdf", repairPdfRoutes);
 app.use("/api", routesIndex);
+app.use("/api/lock", lockDocRoute);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>
