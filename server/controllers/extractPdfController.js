@@ -9,7 +9,7 @@ import path from 'path';
  * Body: pdfFile, pageNumbers (e.g. "2,4,6-8")
  */
 async function extractPdf(req, res, next) {
-  const uploadedPath = req.file?.path;
+  const uploadedPath = path.resolve(req.file.path);
   if (!uploadedPath) {
     return res.status(400).json({ success: false, error: 'PDF file is required (pdfFile)' });
   }

@@ -1,4 +1,4 @@
-  import { exec } from "child_process";
+import { exec, execFile } from "child_process";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -21,183 +21,184 @@ export const runConversion = (inputPath, outputDir, format) => {
     const safeFormat = format.trim().toLowerCase();
     const inputExt = path.extname(inputPath).toLowerCase();
 
-    // Ensure output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // CASE 1: PDF → DOCX
+    // ===============================
+    // PDF → DOCX
+    // ===============================
     if (inputExt === ".pdf" && safeFormat === "docx") {
       const outputFile = path.join(outputDir, path.parse(inputPath).name + ".docx");
       const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToDocx.py");
 
-      const pyCommand = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
-      console.log("🐍 Running Python PDF→Word:", pyCommand);
-
-      exec(pyCommand, (err, stdout, stderr) => {
-        console.log("📤 Python stdout:", stdout);
-        console.log("⚠️ Python stderr:", stderr);
+      const command = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
         if (err) return reject(err);
         resolve(outputFile);
       });
-
       return;
     }
 
-    // CASE 2: PDF → XLSX
+    // ===============================
+    // PDF → XLSX
+    // ===============================
     if (inputExt === ".pdf" && safeFormat === "xlsx") {
       const outputFile = path.join(outputDir, path.parse(inputPath).name + ".xlsx");
       const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToExcel.py");
 
-      const pyCommand = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
-      console.log("🐍 Running Python PDF→Excel:", pyCommand);
-
-      exec(pyCommand, (err, stdout, stderr) => {
-        console.log("📤 Python stdout:", stdout);
-        console.log("⚠️ Python stderr:", stderr);
+      const command = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
         if (err) return reject(err);
         resolve(outputFile);
       });
-
       return;
     }
 
-    console.log("DEBUG:", inputExt, safeFormat);
-
-    // CASE: HTML → PDF
+    // ===============================
+    // HTML → PDF
+    // ===============================
     if (inputExt === ".html" && safeFormat === "pdf") {
       const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
 
-      const command = `"${WKHTMLTOPDF_PATH}" "${inputPath}" "${outputFile}"`;
-      console.log("🌍 Running HTML→PDF:", command);
-
-      exec(command, (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
-        if (err) return reject(err);
-        resolve(outputFile);
-      });
-
+      exec(
+        `"${WKHTMLTOPDF_PATH}" "${inputPath}" "${outputFile}"`,
+        (err, stdout, stderr) => {
+          console.log(stdout);
+          console.log(stderr);
+          if (err) return reject(err);
+          resolve(outputFile);
+        }
+      );
       return;
     }
 
-    // CASE: PDF → HTML
+    // ===============================
+    // PDF → HTML
+    // ===============================
     if (inputExt === ".pdf" && safeFormat === "html") {
       const outputFile = path.join(outputDir, path.parse(inputPath).name + ".html");
 
-      const command = `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`;
-      console.log("📄 Running PDF→HTML:", command);
-
-      exec(command, (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
-        if (err) return reject(err);
-        resolve(outputFile);
-      });
-
+      exec(
+        `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`,
+        (err, stdout, stderr) => {
+          console.log(stdout);
+          console.log(stderr);
+          if (err) return reject(err);
+          resolve(outputFile);
+        }
+      );
       return;
     }
 
-    // CASE: IMAGE → PDF (Scan to PDF)
+    // ===============================
+    // IMAGE → PDF
+    // ===============================
     if (
       [".jpg", ".jpeg", ".png", ".webp"].includes(inputExt) &&
       safeFormat === "pdf"
     ) {
       const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
 
-      const command = `"${MAGICK_PATH}" convert "${inputPath}" -quality 100 "${outputFile}"`;
-      console.log("📄 Image → PDF (Scan):", command);
-
-      exec(command, (err, stdout, stderr) => {
-        console.log("stdout:", stdout);
-        console.log("stderr:", stderr);
-        if (err) return reject(err);
-        resolve(outputFile);
-      });
-
+      exec(
+        `"${MAGICK_PATH}" convert "${inputPath}" -quality 100 "${outputFile}"`,
+        (err, stdout, stderr) => {
+          console.log(stdout);
+          console.log(stderr);
+          if (err) return reject(err);
+          resolve(outputFile);
+        }
+      );
       return;
     }
 
-    // CASE: IMAGE & PDF → IMAGE
+    // ===============================
+    // IMAGE / PDF → IMAGE
+    // ===============================
     if (
       [".jpg", ".jpeg", ".png", ".webp", ".pdf"].includes(inputExt) &&
       ["png", "jpg", "jpeg"].includes(safeFormat)
     ) {
       const baseName = path.parse(inputPath).name;
 
-      // PDF → MULTIPLE IMAGES
       if (inputExt === ".pdf") {
         const outputPattern = path.join(outputDir, `${baseName}-%03d.${safeFormat}`);
 
-        const command = `"${MAGICK_PATH}" -density 300 -define pdf:use-cropbox=true -define pdf:delegate="${GHOSTSCRIPT_PATH}" "${inputPath}" "${outputPattern}"`;
-        console.log("🖼 PDF → Images:", command);
+        exec(
+          `"${MAGICK_PATH}" -density 300 -define pdf:use-cropbox=true -define pdf:delegate="${GHOSTSCRIPT_PATH}" "${inputPath}" "${outputPattern}"`,
+          async (err, stdout, stderr) => {
+            console.log(stdout);
+            console.log(stderr);
+            if (err) return reject(err);
 
-        exec(command, async (err, stdout, stderr) => {
-          console.log(stdout);
-          console.log(stderr);
-          if (err) return reject(err);
+            const images = fs
+              .readdirSync(outputDir)
+              .filter(f => f.startsWith(baseName + "-"))
+              .map(f => path.join(outputDir, f));
 
-          // collect generated images
-          const images = fs.readdirSync(outputDir)
-            .filter(f => f.startsWith(baseName + "-") && f.endsWith("." + safeFormat))
-            .map(f => path.join(outputDir, f));
+            if (!images.length) return reject("No images generated");
 
-          if (!images.length) return reject("No images generated");
+            const zipPath = path.join(outputDir, baseName + "-images.zip");
+            const output = fs.createWriteStream(zipPath);
+            const archive = archiver("zip");
 
-          // zip all images
-          const zipPath = path.join(outputDir, baseName + "-images.zip");
-          const output = fs.createWriteStream(zipPath);
-          const archive = archiver("zip");
+            output.on("close", () => resolve(zipPath));
+            archive.on("error", err => reject(err));
 
-          output.on("close", () => resolve(zipPath));
-          archive.on("error", err => reject(err));
-
-          archive.pipe(output);
-          images.forEach(img => archive.file(img, { name: path.basename(img) }));
-          archive.finalize();
-        });
-
+            archive.pipe(output);
+            images.forEach(img =>
+              archive.file(img, { name: path.basename(img) })
+            );
+            archive.finalize();
+          }
+        );
         return;
       }
 
-
-      // IMAGE → IMAGE
       const outputFile = path.join(outputDir, baseName + "." + safeFormat);
-      const command = `"${MAGICK_PATH}" "${inputPath}" "${outputFile}"`;
-
-      console.log("🖼 Image → Image:", command);
-
-      exec(command, (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
+      exec(`"${MAGICK_PATH}" "${inputPath}" "${outputFile}"`, (err) => {
         if (err) return reject(err);
         resolve(outputFile);
       });
-
       return;
     }
 
-
-
-    // CASE 3: LibreOffice conversions
-    const command = `soffice --headless --convert-to ${safeFormat} "${inputPath}" --outdir "${outputDir}"`;
-    console.log("🖥 Running LibreOffice command:", command);
-
-    exec(command, (err, stdout, stderr) => {
-      console.log("📤 LibreOffice stdout:", stdout);
-      console.log("⚠️ LibreOffice stderr:", stderr);
-      if (err) return reject(err);
-
-      fs.readdir(outputDir, (err, files) => {
+    // ===============================
+    // ✅ LibreOffice (UPDATED TO execFile)
+    // ===============================
+    execFile(
+      "soffice",
+      [
+        "--headless",
+        "--convert-to",
+        safeFormat,
+        inputPath,
+        "--outdir",
+        outputDir,
+      ],
+      (err, stdout, stderr) => {
+        console.log("📤 LibreOffice stdout:", stdout);
+        console.log("⚠️ LibreOffice stderr:", stderr);
         if (err) return reject(err);
-        if (!files.length) return reject("No output file created");
 
-        const newestFile = files
-          .map(f => ({ file: path.join(outputDir, f), time: fs.statSync(path.join(outputDir, f)).mtime.getTime() }))
-          .sort((a, b) => b.time - a.time)[0].file;
+        fs.readdir(outputDir, (err, files) => {
+          if (err) return reject(err);
+          if (!files.length) return reject("No output file created");
 
-        resolve(newestFile);
-      });
-    });
+          const newestFile = files
+            .map(f => ({
+              file: path.join(outputDir, f),
+              time: fs.statSync(path.join(outputDir, f)).mtime.getTime(),
+            }))
+            .sort((a, b) => b.time - a.time)[0].file;
+
+          resolve(newestFile);
+        });
+      }
+    );
   });
 };

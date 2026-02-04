@@ -45,8 +45,8 @@ export async function compressPdf(req, res, next) {
     
     res.sendFile(path.resolve(result.outputPath), (err) => {
       removeFiles([uploadedPath, result.outputPath]);
-      if (err && !res.headersSent) {
-        next(err);
+      if (err ) {
+        console.log(err);
       }
     });
   } catch (error) {

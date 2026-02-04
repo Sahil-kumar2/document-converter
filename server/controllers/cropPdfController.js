@@ -6,30 +6,81 @@ import path from 'path';
 
 /**
  * POST /api/pdf/crop
- * Body: pdfFile, mode ("current_page" | "all_pages"), pageNumber (for current_page), cropBox: x, y, width, height
+ * Body: pdfFile, mode ("current_page" | "all_pages"), pageNumber (for current_page),
+ * cropBox: x, y, width, height
  */
 async function cropPdf(req, res, next) {
-  const uploadedPath = req.file?.path;
-  if (!uploadedPath) {
-    return res.status(400).json({ success: false, error: 'PDF file is required (pdfFile)' });
-  }
-
-  const x = parseFloat(getBodyValue(req.body, 'cropX') ?? getBodyValue(req.body, 'x') ?? req.body?.cropX ?? req.body?.x);
-  const y = parseFloat(getBodyValue(req.body, 'cropY') ?? getBodyValue(req.body, 'y') ?? req.body?.cropY ?? req.body?.y);
-  const width = parseFloat(getBodyValue(req.body, 'cropWidth') ?? getBodyValue(req.body, 'width') ?? req.body?.cropWidth ?? req.body?.width);
-  const height = parseFloat(getBodyValue(req.body, 'cropHeight') ?? getBodyValue(req.body, 'height') ?? req.body?.cropHeight ?? req.body?.height);
-
-  if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(width) || Number.isNaN(height)) {
+  // ✅ Validate file first
+  if (!req.file?.path) {
     return res.status(400).json({
       success: false,
-      error: 'cropBox required: x, y, width, height (numeric). Use form fields: cropX, cropY, cropWidth, cropHeight (or x, y, width, height)',
+      error: 'PDF file is required (pdfFile)',
     });
   }
 
-  // Support both old (pageNumbers) and new (mode + pageNumber) formats
+  // ✅ Replace uploadedPath (as suggested)
+  const uploadedPath = path.resolve(req.file.path);
+
+  const x = parseFloat(
+    getBodyValue(req.body, 'cropX') ??
+    getBodyValue(req.body, 'x') ??
+    req.body?.cropX ??
+    req.body?.x
+  );
+
+  const y = parseFloat(
+    getBodyValue(req.body, 'cropY') ??
+    getBodyValue(req.body, 'y') ??
+    req.body?.cropY ??
+    req.body?.y
+  );
+
+  const width = parseFloat(
+    getBodyValue(req.body, 'cropWidth') ??
+    getBodyValue(req.body, 'width') ??
+    req.body?.cropWidth ??
+    req.body?.width
+  );
+
+  const height = parseFloat(
+    getBodyValue(req.body, 'cropHeight') ??
+    getBodyValue(req.body, 'height') ??
+    req.body?.cropHeight ??
+    req.body?.height
+  );
+
+  // ✅ Numeric validation
+  if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(width) || Number.isNaN(height)) {
+    return res.status(400).json({
+      success: false,
+      error:
+        'cropBox required: x, y, width, height (numeric). Use cropX, cropY, cropWidth, cropHeight',
+    });
+  }
+
+  // ✅ Width & Height must be > 0 (tech lead suggestion)
+  if (width <= 0 || height <= 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'cropWidth and cropHeight must be greater than 0',
+    });
+  }
+
+  // Support both old (pageNumbers) and new (mode + pageNumber)
   const mode = (getBodyValue(req.body, 'mode') ?? req.body?.mode ?? '').toLowerCase();
-  const pageNumber = parseInt(getBodyValue(req.body, 'pageNumber') ?? req.body?.pageNumber ?? '1');
-  const pageNumbers = getBodyValue(req.body, 'pageNumbers');
+  const pageNumber = parseInt(
+    getBodyValue(req.body, 'pageNumber') ?? req.body?.pageNumber ?? '1',
+    10
+  );
+
+  // ✅ Update pageNumbers (string → number[])
+  let pageNumbers = getBodyValue(req.body, 'pageNumbers');
+  if (typeof pageNumbers === 'string') {
+    pageNumbers = pageNumbers
+      .split(',')
+      .map(n => parseInt(n.trim(), 10))
+      .filter(n => Number.isInteger(n) && n > 0);
+  }
 
   try {
     const result = await cropPdfService.cropPdf(uploadedPath, {
@@ -44,7 +95,8 @@ async function cropPdf(req, res, next) {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.sendFile(path.resolve(outPath), (err) => {
+
+    res.sendFile(path.resolve(outPath), err => {
       removeFiles([uploadedPath, outPath]);
       if (err && !res.headersSent) next(err);
     });
