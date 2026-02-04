@@ -320,8 +320,7 @@ export default function CropPdfPanel({
 
     setLoading(true);
     try {
-      const pageNumbers = cropMode === "current_page" ? String(pageNumber) : null;
-      const response = await cropPdf(pdfFile, pdfX, pdfY, pdfWidth, pdfHeight, pageNumbers);
+      const response = await cropPdf(pdfFile, pdfX, pdfY, pdfWidth, pdfHeight, cropMode, cropMode === "current_page" ? pageNumber : null);
       setResultBlob(response.data);
       setResult({
         success: true,

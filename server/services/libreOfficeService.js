@@ -2,9 +2,13 @@
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import archiver from "archiver";
 
 const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
+const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
+const PDFTOHTML_PATH = "C:\\Users\\ASUS\\Release-25.12.0-0\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";
+const GHOSTSCRIPT_PATH = "C:\\Users\\ASUS\\gs10060w64.exe";
 
 // recreate __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -60,28 +64,119 @@ export const runConversion = (inputPath, outputDir, format) => {
 
     console.log("DEBUG:", inputExt, safeFormat);
 
-    // CASE: IMAGE & PDF → IMAGE (ImageMagick)
-    if (
-      [".jpg", ".jpeg", ".png", ".webp", ".pdf"].includes(inputExt) &&
-      ["png", "jpg", "jpeg"].includes(safeFormat)
-    ) {
-      const outputFile = path.join(
-        outputDir,
-        path.parse(inputPath).name + "." + safeFormat
-      );
+    // CASE: HTML → PDF
+    if (inputExt === ".html" && safeFormat === "pdf") {
+      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
 
-      const command = `"${MAGICK_PATH}" -density 300 "${inputPath}" "${outputFile}"`;
-      console.log("🖼 Running ImageMagick:", command);
+      const command = `"${WKHTMLTOPDF_PATH}" "${inputPath}" "${outputFile}"`;
+      console.log("🌍 Running HTML→PDF:", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        if (err) return reject(err);
+        resolve(outputFile);
+      });
+
+      return;
+    }
+
+    // CASE: PDF → HTML
+    if (inputExt === ".pdf" && safeFormat === "html") {
+      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".html");
+
+      const command = `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`;
+      console.log("📄 Running PDF→HTML:", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        if (err) return reject(err);
+        resolve(outputFile);
+      });
+
+      return;
+    }
+
+    // CASE: IMAGE → PDF (Scan to PDF)
+    if (
+      [".jpg", ".jpeg", ".png", ".webp"].includes(inputExt) &&
+      safeFormat === "pdf"
+    ) {
+      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
+
+      const command = `"${MAGICK_PATH}" convert "${inputPath}" -quality 100 "${outputFile}"`;
+      console.log("📄 Image → PDF (Scan):", command);
 
       exec(command, (err, stdout, stderr) => {
         console.log("stdout:", stdout);
         console.log("stderr:", stderr);
         if (err) return reject(err);
-        return resolve(outputFile);
+        resolve(outputFile);
       });
 
       return;
     }
+
+    // CASE: IMAGE & PDF → IMAGE
+    if (
+      [".jpg", ".jpeg", ".png", ".webp", ".pdf"].includes(inputExt) &&
+      ["png", "jpg", "jpeg"].includes(safeFormat)
+    ) {
+      const baseName = path.parse(inputPath).name;
+
+      // PDF → MULTIPLE IMAGES
+      if (inputExt === ".pdf") {
+        const outputPattern = path.join(outputDir, `${baseName}-%03d.${safeFormat}`);
+
+        const command = `"${MAGICK_PATH}" -density 300 -define pdf:use-cropbox=true -define pdf:delegate="${GHOSTSCRIPT_PATH}" "${inputPath}" "${outputPattern}"`;
+        console.log("🖼 PDF → Images:", command);
+
+        exec(command, async (err, stdout, stderr) => {
+          console.log(stdout);
+          console.log(stderr);
+          if (err) return reject(err);
+
+          // collect generated images
+          const images = fs.readdirSync(outputDir)
+            .filter(f => f.startsWith(baseName + "-") && f.endsWith("." + safeFormat))
+            .map(f => path.join(outputDir, f));
+
+          if (!images.length) return reject("No images generated");
+
+          // zip all images
+          const zipPath = path.join(outputDir, baseName + "-images.zip");
+          const output = fs.createWriteStream(zipPath);
+          const archive = archiver("zip");
+
+          output.on("close", () => resolve(zipPath));
+          archive.on("error", err => reject(err));
+
+          archive.pipe(output);
+          images.forEach(img => archive.file(img, { name: path.basename(img) }));
+          archive.finalize();
+        });
+
+        return;
+      }
+
+
+      // IMAGE → IMAGE
+      const outputFile = path.join(outputDir, baseName + "." + safeFormat);
+      const command = `"${MAGICK_PATH}" "${inputPath}" "${outputFile}"`;
+
+      console.log("🖼 Image → Image:", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        if (err) return reject(err);
+        resolve(outputFile);
+      });
+
+      return;
+    }
+
 
 
     // CASE 3: LibreOffice conversions
