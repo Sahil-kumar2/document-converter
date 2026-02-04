@@ -20,7 +20,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "http://localhost:5174","https://your-frontend.onrender.com"],
     exposedHeaders: ["Content-Disposition", "X-Original-Size", "X-Compressed-Size"]
   })
 );
