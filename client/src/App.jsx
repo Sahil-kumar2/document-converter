@@ -213,7 +213,7 @@ export default function App() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-blue-800">
                   <div>
-                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG, HTML
+                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG, HTML, PPT
                   </div>
                   <div>
                     <strong>HTML:</strong> PDF

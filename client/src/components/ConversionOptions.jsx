@@ -14,7 +14,7 @@ export default function ConversionOptions({
     filename.split(".").pop().toLowerCase();
 
   const conversionRules = {
-    pdf: ["docx", "xlsx", "png", "jpg", "html"],
+    pdf: ["docx", "xlsx", "png", "jpg", "html", "ppt"],
     html: ["pdf"],
     docx: ["pdf"],
     xlsx: ["pdf"],

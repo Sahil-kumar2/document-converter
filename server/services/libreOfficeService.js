@@ -167,6 +167,28 @@ export const runConversion = (inputPath, outputDir, format) => {
       return;
     }
 
+    // CASE: PDF → PPTX
+    if (inputExt === ".pdf" && safeFormat === "pptx") {
+      const command = `soffice --headless --convert-to pptx "${inputPath}" --outdir "${outputDir}"`;
+      console.log("📊 PDF → PPT:", command);
+
+      exec(command, (err, stdout, stderr) => {
+        console.log(stdout);
+        console.log(stderr);
+        if (err) return reject(err);
+
+        const outputFile = path.join(
+          outputDir,
+          path.parse(inputPath).name + ".pptx"
+        );
+
+        resolve(outputFile);
+      });
+
+      return;
+    }
+
+
     // ===============================
     // ✅ LibreOffice (UPDATED TO execFile)
     // ===============================
