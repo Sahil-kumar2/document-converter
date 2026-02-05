@@ -11,7 +11,8 @@ writer = PdfWriter()
 for page in reader.pages:
     writer.add_page(page)
 
-writer.encrypt(password)
+# PyPDF2 3.0.x compatibility (no algorithm argument)
+writer.encrypt(user_password=password, owner_password=password, use_128bit=True)
 
 with open(output_file, "wb") as f:
     writer.write(f)

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Backend base URL - can be configured via environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -457,6 +457,25 @@ export const organizePdf = async (pdfFile, payload = {}) => {
   }
 
   return apiClient.post("/api/pdf/organize", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+/**
+ * Protect PDF with password
+ * @param {File} pdfFile - PDF file to protect
+ * @param {string} password - Password to encrypt the PDF
+ * @returns {Promise<Blob>} - Protected PDF file
+ */
+export const lockDocument = async (pdfFile, password) => {
+  const formData = new FormData();
+  formData.append("file", pdfFile);
+  formData.append("password", password);
+
+  return apiClient.post("/api/lockDocument", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

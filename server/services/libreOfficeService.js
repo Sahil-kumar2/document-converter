@@ -4,7 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import archiver from "archiver";
 
-const PYTHON_PATH = "C:\\Users\\user\\AppData\\Local\\Python\\bin\\python.exe";
+const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Users\\ASUS\\Release-25.12.0-0\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";

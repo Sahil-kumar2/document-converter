@@ -36,9 +36,17 @@ export const uploadAndLock = async (req, res) => {
       fs.unlinkSync(file.path);
     }
 
-    return res.json({
-      success: true,
-      securedFile: outputFile,
+    // Send the file as download instead of JSON
+    res.download(outputFile, path.basename(outputFile), (err) => {
+      if (err) {
+        console.error("❌ Download error:", err);
+        return res.status(500).json({ error: "Failed to download file" });
+      }
+      
+      // Clean up output file after download
+      if (fs.existsSync(outputFile)) {
+        fs.unlinkSync(outputFile);
+      }
     });
   } catch (err) {
     console.error("❌ Controller error:", err);
