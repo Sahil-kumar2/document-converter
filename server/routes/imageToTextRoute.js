@@ -1,13 +1,14 @@
 import express from "express";
-import upload from "../utils/fileUtils.js";
+import { singleFile } from "../middleware/upload.js";
 import { imageToText } from "../controllers/imageToTextController.js";
 
 const router = express.Router();
 
 router.post(
   "/getText",
-  upload.single("image"),
-imageToText
+
+  singleFile,
+  imageToText
 );
 
 export default router;

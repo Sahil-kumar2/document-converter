@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload, pdfFilesFields, pdfFileFields } from '../utils/multerConfig.js';
+import upload, { pdfFileFields } from '../middleware/upload.js';
 import * as splitPdfController from '../controllers/splitPdfController.js';
 import * as cropPdfController from '../controllers/cropPdfController.js';
 import * as extractPdfController from '../controllers/extractPdfController.js';

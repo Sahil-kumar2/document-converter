@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload } from '../utils/multerConfig.js';
+import upload from '../middleware/upload.js';
 import * as removePagesController from '../controllers/removePagesController.js';
 
 const router = express.Router();

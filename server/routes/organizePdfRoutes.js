@@ -1,13 +1,8 @@
 import express from "express";
-import { upload } from "../utils/multerConfig.js";
+import { pdfFileFields } from "../middleware/upload.js";
 import { organizePdfController } from "../controllers/organizePdfController.js";
 
 const router = express.Router();
-
-const pdfFields = upload.fields([
-  { name: "pdfFile", maxCount: 1 },
-  { name: "pdfFile ", maxCount: 1 },
-]);
 
 const normalizePdfFile = (req, res, next) => {
   if (req.files) {
@@ -16,6 +11,11 @@ const normalizePdfFile = (req, res, next) => {
   next();
 };
 
-router.post("/organize", pdfFields, normalizePdfFile, organizePdfController);
+router.post(
+  "/organize",
+  pdfFileFields,
+  normalizePdfFile,
+  organizePdfController
+);
 
 export default router;

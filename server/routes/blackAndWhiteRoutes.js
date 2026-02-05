@@ -1,12 +1,12 @@
 import express from "express";
-import upload from "../utils/fileUtils.js";
+import { singleFile } from "../middleware/upload.js";
 import { blackWhiteController } from "../controllers/blackAndWhiteController.js";
 
 const router = express.Router();
 
 router.post(
   "/black-white",
-  upload.single("image"),
+  singleFile,   // handles the uploaded image
   blackWhiteController
 );
 
