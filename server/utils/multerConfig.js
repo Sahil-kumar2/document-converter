@@ -19,8 +19,20 @@ const storage = multer.diskStorage({
   },
 });
 
-// Accept only PDF files
+// Accept PDF files for PDF uploads, and image files for watermark images
 const fileFilter = (req, file, cb) => {
+  const field = String(file.fieldname || '').trim();
+  const isWatermarkImage = field === 'watermarkImage' || field === 'watermarkImage ';
+
+  if (isWatermarkImage) {
+    if (file.mimetype && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed for watermarkImage'), false);
+    }
+    return;
+  }
+
   const allowed = ['application/pdf'];
   if (allowed.includes(file.mimetype)) {
     cb(null, true);

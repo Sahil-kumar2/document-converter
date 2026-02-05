@@ -163,17 +163,33 @@ export const watermarkPdf = async (
   position = "center",
   opacity = 0.3,
   fontSize = 48,
-  pageNumbers = null
+  pageNumbers = null,
+  options = {}
 ) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  formData.append("watermarkText", watermarkText);
+  if (watermarkText !== undefined && watermarkText !== null) {
+    formData.append("watermarkText", watermarkText);
+  }
   formData.append("position", position);
   formData.append("opacity", opacity);
   formData.append("fontSize", fontSize);
   if (pageNumbers) {
     formData.append("pageNumbers", pageNumbers);
   }
+
+  if (options?.type) formData.append("type", options.type);
+  if (options?.xRatio !== undefined) formData.append("xRatio", options.xRatio);
+  if (options?.yRatio !== undefined) formData.append("yRatio", options.yRatio);
+  if (options?.scale !== undefined) formData.append("scale", options.scale);
+  if (options?.rotation !== undefined) formData.append("rotation", options.rotation);
+  if (options?.pageScope) formData.append("pageScope", options.pageScope);
+  if (options?.pageNumber !== undefined) formData.append("pageNumber", options.pageNumber);
+  if (options?.fontFamily) formData.append("fontFamily", options.fontFamily);
+  if (options?.fontColor) formData.append("fontColor", options.fontColor);
+  if (options?.bold !== undefined) formData.append("bold", options.bold);
+  if (options?.italic !== undefined) formData.append("italic", options.italic);
+  if (options?.watermarkImage) formData.append("watermarkImage", options.watermarkImage);
 
   return apiClient.post("/api/pdf/watermark", formData, {
     headers: {
