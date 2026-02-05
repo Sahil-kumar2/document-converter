@@ -14,6 +14,8 @@ const router = express.Router();
 const pdfFields = upload.fields([
   { name: 'pdfFile', maxCount: 1 },
   { name: 'pdfFile ', maxCount: 1 },
+  { name: 'watermarkImage', maxCount: 1 },
+  { name: 'watermarkImage ', maxCount: 1 },
 ]);
 
 // Normalize so controllers still get req.file
