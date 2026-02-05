@@ -9,6 +9,7 @@ const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Users\\ASUS\\Release-25.12.0-0\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";
 const GHOSTSCRIPT_PATH = "C:\\Users\\ASUS\\gs10060w64.exe";
+const LIBREOFFICE_PATH = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
 
 // recreate __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -171,7 +172,7 @@ export const runConversion = (inputPath, outputDir, format) => {
     // ✅ LibreOffice (UPDATED TO execFile)
     // ===============================
     execFile(
-      "soffice",
+      LIBREOFFICE_PATH,
       [
         "--headless",
         "--convert-to",

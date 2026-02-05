@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { getBodyValue } from "../utils/bodyFields.js";
 import { removeFiles } from "../utils/cleanup.js";
 import { signPdf } from "../services/signPdfService.js";
@@ -14,7 +15,23 @@ export async function signPdfController(req, res, next) {
   }
 
   const signatureText = getBodyValue(req.body, "signatureText");
-  const signatureImage = getBodyValue(req.body, "signatureImage");
+  let signatureImage = getBodyValue(req.body, "signatureImage");
+  let signatureImagePath = null;
+  
+  // If signatureImage was uploaded as a file, convert it to base64 data URL
+  if (!signatureImage && req.files?.signatureImage?.[0]) {
+    signatureImagePath = req.files.signatureImage[0].path;
+    try {
+      const imageBuffer = fs.readFileSync(signatureImagePath);
+      const ext = path.extname(signatureImagePath).toLowerCase().slice(1); // jpg or png
+      const mimeType = ext === "jpg" || ext === "jpeg" ? "jpeg" : "png";
+      signatureImage = `data:image/${mimeType};base64,${imageBuffer.toString("base64")}`;
+    } catch (error) {
+      console.error("Error reading signature image:", error);
+      return res.status(400).json({ success: false, error: "Failed to read signature image" });
+    }
+  }
+  
   const pageNumber = parseInt(getBodyValue(req.body, "pageNumber") || "1", 10);
   const position = getBodyValue(req.body, "position") || undefined;
   const x = parseFloat(getBodyValue(req.body, "x"));
@@ -27,7 +44,7 @@ export async function signPdfController(req, res, next) {
   if (!signatureText && !signatureImage) {
     return res.status(400).json({
       success: false,
-      error: "Provide signatureText or signatureImage (base64 data URL)",
+      error: "Provide signatureText or signatureImage",
     });
   }
 
@@ -50,11 +67,21 @@ export async function signPdfController(req, res, next) {
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
     res.sendFile(path.resolve(outputPath), (err) => {
-      removeFiles([uploadedPath, outputPath]);
+      const filesToRemove = [uploadedPath, outputPath];
+      // Also remove signature image file if it was uploaded
+      if (req.files?.signatureImage?.[0]?.path) {
+        filesToRemove.push(req.files.signatureImage[0].path);
+      }
+      removeFiles(filesToRemove);
       if (err && !res.headersSent) next(err);
     });
   } catch (error) {
-    removeFiles([uploadedPath]);
+    const filesToRemove = [uploadedPath];
+    // Also remove signature image file if it was uploaded
+    if (req.files?.signatureImage?.[0]?.path) {
+      filesToRemove.push(req.files.signatureImage[0].path);
+    }
+    removeFiles(filesToRemove);
     next(error);
   }
 }

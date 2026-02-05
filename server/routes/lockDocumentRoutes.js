@@ -1,9 +1,9 @@
 import express from "express";
 import { uploadAndLock } from "../controllers/lockDocumentController.js";
-import upload from "../utils/fileUtils.js";
+import { uploadSingleFile } from "../middleware/multerconfig.js";
 const router = express.Router();
 
-router.post("/lockDocument",upload.single("file"), uploadAndLock );
+router.post("/lockDocument", uploadSingleFile, uploadAndLock );
 
 export default router;
 
