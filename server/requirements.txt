@@ -1,0 +1,5 @@
+camelot-py
+pdf2docx
+PyPDF2
+pandas
+openpyxl

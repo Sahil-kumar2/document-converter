@@ -1,6 +1,7 @@
+import fs from "fs/promises";
 import { mergeExcelFiles } from "../services/excelServices.js";
 
-export function mergeExcelController(req, res) {
+export async function mergeExcelController(req, res) {
   try {
     if (!req.files || req.files.length < 2) {
       return res.status(400).json({
@@ -9,9 +10,14 @@ export function mergeExcelController(req, res) {
       });
     }
 
-    const filePaths = req.files.map(file => file.path);
+    const filePaths = req.files.map(f => f.path);
 
     const outputPath = mergeExcelFiles(filePaths);
+
+    // 🔥 DELETE TEMP FILES AFTER SUCCESS
+    await Promise.all(
+      filePaths.map(p => fs.unlink(p))
+    );
 
     res.json({
       success: true,
@@ -20,6 +26,7 @@ export function mergeExcelController(req, res) {
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       success: false,
       error: err.message

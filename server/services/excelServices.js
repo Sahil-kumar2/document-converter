@@ -1,45 +1,53 @@
 import XLSX from "xlsx";
 import path from "path";
-import fs from "fs";
 
 export function mergeExcelFiles(filePaths) {
-  let allRows = [];
-  let allHeaders = new Set();
+  let outputAOA = [];
 
-  // 1️⃣ Read all files & collect headers
   filePaths.forEach(filePath => {
     const wb = XLSX.readFile(filePath);
-    const sheet = wb.Sheets[wb.SheetNames[0]];
 
-    const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    wb.SheetNames.forEach(sheetName => {
+      const sheet = wb.Sheets[sheetName];
+      if (!sheet || !sheet["!ref"]) return;
 
-    data.forEach(row => {
-      Object.keys(row).forEach(key => allHeaders.add(key));
-      allRows.push(row);
+  
+      const range = XLSX.utils.decode_range(sheet["!ref"]);
+
+      
+      const block = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: "",
+        range: range
+      });
+
+      if (!block.length) return;
+
+  
+      const cleaned = block.filter(row =>
+        row.some(cell => cell !== "")
+      );
+
+      if (!cleaned.length) return;
+
+      if (outputAOA.length) {
+        outputAOA.push([]);
+      }
+
+      cleaned.forEach(r => outputAOA.push(r));
     });
   });
 
-  const headers = Array.from(allHeaders);
+ 
+  const outSheet = XLSX.utils.aoa_to_sheet(outputAOA);
+  const outWb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(outWb, outSheet, "Merged");
 
-  // 2️⃣ Normalize rows (fix column mismatch)
-  const normalizedRows = allRows.map(row => {
-    let newRow = {};
-    headers.forEach(h => {
-      newRow[h] = row[h] ?? "";
-    });
-    return newRow;
-  });
+  const outputPath = path.join(
+    "uploads",
+    `merged-${Date.now()}.xlsx`
+  );
 
-  // 3️⃣ Write merged Excel
-  const newSheet = XLSX.utils.json_to_sheet(normalizedRows, {
-    header: headers
-  });
-
-  const newWb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(newWb, newSheet, "Merged");
-
-  const outputPath = path.join("uploads", "merged.xlsx");
-  XLSX.writeFile(newWb, outputPath);
-
+  XLSX.writeFile(outWb, outputPath);
   return outputPath;
 }
