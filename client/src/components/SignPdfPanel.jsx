@@ -24,14 +24,12 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
 
     setLoading(true);
     try {
-      const response = await signPdf(
-        pdfFile,
-        signatureImage,
-        signaturePosition,
-        signatureSize,
-        signaturePageNumber,
-        applyToAllPages
-      );
+      const response = await signPdf(pdfFile, {
+        signatureImage: signatureImage,
+        position: signaturePosition,
+        pageNumber: applyToAllPages ? undefined : signaturePageNumber,
+        applyToAllPages: applyToAllPages
+      });
       setResultBlob(response.data);
       setResult({ success: true, fileName: "signed.pdf" });
     } catch (error) {

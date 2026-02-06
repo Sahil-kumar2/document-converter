@@ -39,7 +39,7 @@ app.use("/api/pdf", mergePdfRoutes);
 app.use("/api/pdf", removePagesRoutes);
 app.use("/api/pdf", repairPdfRoutes);
 app.use("/api", routesIndex);
-app.use("/api/lock", lockDocRoute);
+app.use("/api", lockDocRoute);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 export default function HomePage() {
   const pdfTools = [
     { name: 'Sign PDF', icon: '✍️', route: '/sign-pdf', desc: 'Add signature to PDF' },
+    { name: 'Protect PDF', icon: '🔒', route: '/protect-pdf', desc: 'Password protect PDF' },
     { name: 'Organize PDF', icon: '📑', route: '/organize-pdf', desc: 'Reorder pages' },
     { name: 'Compress PDF', icon: '📦', route: '/compress-pdf', desc: 'Reduce file size' },
     { name: 'Merge PDFs', icon: '🔗', route: '/merge-pdf', desc: 'Combine multiple PDFs' },

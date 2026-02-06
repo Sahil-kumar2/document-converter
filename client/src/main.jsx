@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage'
 
 // PDF Tools
 import SignPdfPage from './pages/tools/SignPdfPage'
+import ProtectPdfPage from './pages/tools/ProtectPdfPage'
 import OrganizePdfPage from './pages/tools/OrganizePdfPage'
 import CompressPdfPage from './pages/tools/CompressPdfPage'
 import MergePdfPage from './pages/tools/MergePdfPage'
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')).render(
         
         {/* PDF Tools */}
         <Route path="/sign-pdf" element={<SignPdfPage />} />
+        <Route path="/protect-pdf" element={<ProtectPdfPage />} />
         <Route path="/organize-pdf" element={<OrganizePdfPage />} />
         <Route path="/compress-pdf" element={<CompressPdfPage />} />
         <Route path="/merge-pdf" element={<MergePdfPage />} />
