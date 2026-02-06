@@ -29,7 +29,7 @@ export const convertFile = async (req, res, next) => {
     console.log("Converting to format:", format);
 
     const conversionRules = {
-      ".pdf": ["docx", "xlsx", "png", "jpg", "html", "ppt", "pptx"],
+      ".pdf": ["docx", "xlsx", "png", "jpg", "html", "pptx", "ppt"],
       ".docx": ["pdf"],
       ".xlsx": ["pdf"],
       ".ppt": ["pdf"],

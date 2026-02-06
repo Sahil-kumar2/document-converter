@@ -169,7 +169,7 @@ export const runConversion = (inputPath, outputDir, format) => {
 
     // CASE: PDF → PPTX
     if (inputExt === ".pdf" && safeFormat === "pptx") {
-      const command = `soffice --headless --convert-to pptx "${inputPath}" --outdir "${outputDir}"`;
+      const command = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to "pptx:Impress MS PowerPoint 2007 XML" --outdir "${outputDir}" "${inputPath}"`;
       console.log("📊 PDF → PPT:", command);
 
       exec(command, (err, stdout, stderr) => {

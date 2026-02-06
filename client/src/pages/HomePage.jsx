@@ -35,6 +35,7 @@ export default function HomePage() {
     { name: 'PDF to JPG', icon: '🖼️', route: '/pdf-to-jpg', desc: 'PDF to Image' },
     { name: 'PDF to PNG', icon: '🖼️', route: '/pdf-to-png', desc: 'PDF to Image' },
     { name: 'PDF to HTML', icon: '🌐', route: '/pdf-to-html', desc: 'PDF to Web' },
+    { name: 'PDF to PPTX', icon: '📊', route: '/pdf-to-pptx', desc: 'PDF to PowerPoint' },
     { name: 'HTML to PDF', icon: '📄', route: '/html-to-pdf', desc: 'Web to PDF' },
   ]
 

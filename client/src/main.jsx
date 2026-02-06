@@ -38,6 +38,8 @@ import PdfToJpgPage from './pages/tools/PdfToJpgPage'
 import PdfToPngPage from './pages/tools/PdfToPngPage'
 import PdfToHtmlPage from './pages/tools/PdfToHtmlPage'
 import HtmlToPdfPage from './pages/tools/HtmlToPdfPage'
+import PdfToPptPage from './pages/tools/PdfToPptPage'
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -79,6 +81,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/pdf-to-png" element={<PdfToPngPage />} />
         <Route path="/pdf-to-html" element={<PdfToHtmlPage />} />
         <Route path="/html-to-pdf" element={<HtmlToPdfPage />} />
+        <Route path="/pdf-to-pptx" element={<PdfToPptPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

@@ -17,7 +17,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("convert");
 
   const conversionRules = {
-    pdf: ["docx", "xlsx", "png", "jpg", "html"],
+    pdf: ["docx", "xlsx", "png", "jpg", "html", "pptx", "ppt"],
     html: ["pdf"],
     docx: ["pdf"],
     xlsx: ["pdf"],
@@ -213,7 +213,7 @@ export default function App() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-blue-800">
                   <div>
-                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG, HTML, PPT
+                    <strong>PDF:</strong> DOCX, XLSX, PNG, JPG, HTML, PPTX, PPT
                   </div>
                   <div>
                     <strong>HTML:</strong> PDF
