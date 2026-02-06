@@ -1,9 +1,5 @@
 import express from 'express';
-<<<<<<< HEAD
-import upload, { pdfFileFields } from '../middleware/upload.js';
-=======
 import { uploadPdfWithWatermark, normalizePdfFile } from '../middleware/multerconfig.js';
->>>>>>> origin/pdffeatures
 import * as splitPdfController from '../controllers/splitPdfController.js';
 import * as cropPdfController from '../controllers/cropPdfController.js';
 import * as extractPdfController from '../controllers/extractPdfController.js';

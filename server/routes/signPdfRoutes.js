@@ -1,9 +1,5 @@
 import express from "express";
-<<<<<<< HEAD
-import upload from "../middleware/upload.js";
-=======
 import { upload, normalizePdfFile } from "../middleware/multerconfig.js";
->>>>>>> origin/pdffeatures
 import { signPdfController } from "../controllers/signPdfController.js";
 
 const router = express.Router();

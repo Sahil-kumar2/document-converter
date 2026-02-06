@@ -1,9 +1,5 @@
 import express from 'express';
-<<<<<<< HEAD
-import upload from '../middleware/upload.js';
-=======
 import { uploadSinglePdf, normalizePdfFile } from '../middleware/multerconfig.js';
->>>>>>> origin/pdffeatures
 import * as removePagesController from '../controllers/removePagesController.js';
 
 const router = express.Router();

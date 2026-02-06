@@ -1,11 +1,6 @@
 import path from "path";
 import { runConversion } from "../services/libreOfficeService.js";
-<<<<<<< HEAD
-//import { deleteFile } from "../utils/fileUtils.js";
-import { deleteFile } from "../middleware/upload.js";
-=======
 import { deleteFile } from "../middleware/multerconfig.js";
->>>>>>> origin/pdffeatures
 
 export const convertFile = async (req, res, next) => {
   console.log("REQUEST RECEIVED");
