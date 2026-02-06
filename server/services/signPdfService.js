@@ -23,32 +23,42 @@ const decodeDataUrl = (dataUrl) => {
 };
 
 /**
- * Sign a PDF with text or image using pdf-lib.
+ * Sign a PDF with text, drawn signature, or image
  * @param {string} inputPath
  * @param {{
+ *  signatureType: "text" | "draw" | "image",
  *  signatureText?: string,
- *  signatureImage?: string,
+ *  signatureImage?: string (base64 data URL),
  *  pageNumber: number,
- *  position?: string,
- *  x?: number,
- *  y?: number,
+ *  xRatio?: number (0-1),
+ *  yRatio?: number (0-1),
+ *  scale?: number (0-1),
  *  fontSize?: number,
+ *  fontFamily?: string,
  *  color?: string,
- *  width?: number,
- *  height?: number
+ *  position?: string (legacy),
+ *  x?: number (legacy),
+ *  y?: number (legacy),
+ *  width?: number (legacy),
+ *  height?: number (legacy)
  * }} options
  * @returns {Promise<string>}
  */
 export async function signPdf(inputPath, options) {
   const {
+    signatureType = "text",
     signatureText,
     signatureImage,
     pageNumber,
+    xRatio = 0.5,
+    yRatio = 0.5,
+    scale = 0.2,
+    fontSize = 24,
+    fontFamily = "cursive",
+    color = "#000000",
     position,
     x,
     y,
-    fontSize = 24,
-    color = "#000000",
     width,
     height,
   } = options;
@@ -64,20 +74,33 @@ export async function signPdf(inputPath, options) {
   const page = pdfDoc.getPage(pageNumber - 1);
   const { width: pageWidth, height: pageHeight } = page.getSize();
 
-  if (signatureText) {
+  if (signatureType === "text" && signatureText) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const textWidth = font.widthOfTextAtSize(signatureText, fontSize);
     const textHeight = fontSize;
 
-    const placement = resolveSignaturePlacement({
-      pageWidth,
-      pageHeight,
-      position,
-      x,
-      y,
-      boxWidth: textWidth,
-      boxHeight: textHeight,
-    });
+    // Use ratio-based positioning if xRatio is provided, else fallback to legacy
+    let placement;
+    if (xRatio !== undefined && yRatio !== undefined) {
+      // Convert ratio to absolute position
+      const absoluteX = xRatio * pageWidth;
+      const absoluteY = (1 - yRatio) * pageHeight; // Invert Y (PDF Y increases bottom-to-top)
+      placement = {
+        x: absoluteX - textWidth / 2,
+        y: absoluteY - textHeight / 2,
+      };
+    } else {
+      // Legacy positioning
+      placement = resolveSignaturePlacement({
+        pageWidth,
+        pageHeight,
+        position,
+        x,
+        y,
+        boxWidth: textWidth,
+        boxHeight: textHeight,
+      });
+    }
 
     page.drawText(signatureText, {
       x: placement.x,
@@ -86,7 +109,7 @@ export async function signPdf(inputPath, options) {
       font,
       color: parseColor(color),
     });
-  } else if (signatureImage) {
+  } else if ((signatureType === "image" || signatureType === "draw") && signatureImage) {
     const decoded = decodeDataUrl(signatureImage);
     if (!decoded) {
       throw new Error("signatureImage must be a base64 data URL (png or jpg)");
@@ -97,18 +120,18 @@ export async function signPdf(inputPath, options) {
       : await pdfDoc.embedJpg(decoded.buffer);
 
     const imgDims = image.scale(1);
-    const drawWidth = width && width > 0 ? width : imgDims.width;
-    const drawHeight = height && height > 0 ? height : imgDims.height;
+    
+    // Calculate dimensions based on scale ratio
+    const drawWidth = pageWidth * scale;
+    const drawHeight = pageHeight * scale * 0.5;
 
-    const placement = resolveSignaturePlacement({
-      pageWidth,
-      pageHeight,
-      position,
-      x,
-      y,
-      boxWidth: drawWidth,
-      boxHeight: drawHeight,
-    });
+    // Use ratio-based positioning
+    const absoluteX = xRatio * pageWidth;
+    const absoluteY = (1 - yRatio) * pageHeight; // Invert Y
+    const placement = {
+      x: absoluteX - drawWidth / 2,
+      y: absoluteY - drawHeight / 2,
+    };
 
     page.drawImage(image, {
       x: placement.x,

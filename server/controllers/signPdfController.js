@@ -6,7 +6,11 @@ import { signPdf } from "../services/signPdfService.js";
 
 /**
  * POST /api/pdf/sign
- * Body: pdfFile, signatureText or signatureImage (data URL), pageNumber, position/x/y
+ * Body: pdfFile, signatureType (text|draw|image)
+ * For text: signatureText, fontSize, fontFamily, color
+ * For image/draw: signatureImage (base64 or uploaded file)
+ * Position: xRatio, yRatio, scale (all 0-1 normalized)
+ * pageNumber: page to sign
  */
 export async function signPdfController(req, res, next) {
   const uploadedPath = req.file?.path;
@@ -14,6 +18,7 @@ export async function signPdfController(req, res, next) {
     return res.status(400).json({ success: false, error: "PDF file is required (pdfFile)" });
   }
 
+  const signatureType = getBodyValue(req.body, "signatureType") || "text";
   const signatureText = getBodyValue(req.body, "signatureText");
   let signatureImage = getBodyValue(req.body, "signatureImage");
   let signatureImagePath = null;
@@ -33,44 +38,61 @@ export async function signPdfController(req, res, next) {
   }
   
   const pageNumber = parseInt(getBodyValue(req.body, "pageNumber") || "1", 10);
+  const xRatio = parseFloat(getBodyValue(req.body, "xRatio") || "0.5");
+  const yRatio = parseFloat(getBodyValue(req.body, "yRatio") || "0.5");
+  const scale = parseFloat(getBodyValue(req.body, "scale") || "0.2");
+  
+  // Text signature properties
+  const fontSize = parseFloat(getBodyValue(req.body, "fontSize") || "24");
+  const fontFamily = getBodyValue(req.body, "fontFamily") || "cursive";
+  const color = getBodyValue(req.body, "color") || "#000000";
+  
+  // Backward compat: old position/x/y/width/height fields
   const position = getBodyValue(req.body, "position") || undefined;
   const x = parseFloat(getBodyValue(req.body, "x"));
   const y = parseFloat(getBodyValue(req.body, "y"));
-  const fontSize = parseFloat(getBodyValue(req.body, "fontSize"));
-  const color = getBodyValue(req.body, "color");
   const width = parseFloat(getBodyValue(req.body, "width"));
   const height = parseFloat(getBodyValue(req.body, "height"));
 
-  if (!signatureText && !signatureImage) {
+  if (signatureType === "text" && !signatureText) {
     return res.status(400).json({
       success: false,
-      error: "Provide signatureText or signatureImage",
+      error: "signatureText is required for text signatures",
+    });
+  }
+
+  if ((signatureType === "image" || signatureType === "draw") && !signatureImage) {
+    return res.status(400).json({
+      success: false,
+      error: "signatureImage is required for image/draw signatures",
     });
   }
 
   try {
     const outputPath = await signPdf(uploadedPath, {
+      signatureType,
       signatureText,
       signatureImage,
       pageNumber,
+      xRatio,
+      yRatio,
+      scale,
+      fontSize,
+      fontFamily,
+      color,
+      // Backward compat
       position,
       x: Number.isFinite(x) ? x : undefined,
       y: Number.isFinite(y) ? y : undefined,
-      fontSize: Number.isFinite(fontSize) ? fontSize : undefined,
-      color: color || undefined,
       width: Number.isFinite(width) ? width : undefined,
       height: Number.isFinite(height) ? height : undefined,
     });
 
-    const filename = path.basename(outputPath);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-
-    res.sendFile(path.resolve(outputPath), (err) => {
+    res.download(outputPath, "signed.pdf", (err) => {
       const filesToRemove = [uploadedPath, outputPath];
       // Also remove signature image file if it was uploaded
-      if (req.files?.signatureImage?.[0]?.path) {
-        filesToRemove.push(req.files.signatureImage[0].path);
+      if (signatureImagePath) {
+        filesToRemove.push(signatureImagePath);
       }
       removeFiles(filesToRemove);
       if (err && !res.headersSent) next(err);
@@ -78,8 +100,8 @@ export async function signPdfController(req, res, next) {
   } catch (error) {
     const filesToRemove = [uploadedPath];
     // Also remove signature image file if it was uploaded
-    if (req.files?.signatureImage?.[0]?.path) {
-      filesToRemove.push(req.files.signatureImage[0].path);
+    if (signatureImagePath) {
+      filesToRemove.push(signatureImagePath);
     }
     removeFiles(filesToRemove);
     next(error);
