@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import archiver from "archiver";
+import CloudConvert from "cloudconvert";
 
 const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
@@ -10,6 +11,7 @@ const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Users\\ASUS\\Release-25.12.0-0\\poppler-25.12.0\\Library\\bin\\pdftohtml.exe";
 const GHOSTSCRIPT_PATH = "C:\\Users\\ASUS\\gs10060w64.exe";
 const LIBREOFFICE_PATH = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY, true);
 
 // recreate __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -168,23 +170,61 @@ export const runConversion = (inputPath, outputDir, format) => {
       return;
     }
 
-    // CASE: PDF → PPTX
+
+    console.log("CloudConvert Key:", process.env.CLOUDCONVERT_API_KEY);
+    // ===============================
+    // PDF → PPTX (CloudConvert)
+    // ===============================
     if (inputExt === ".pdf" && safeFormat === "pptx") {
-      const command = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to "pptx:Impress MS PowerPoint 2007 XML" --outdir "${outputDir}" "${inputPath}"`;
-      console.log("📊 PDF → PPT:", command);
 
-      exec(command, (err, stdout, stderr) => {
-        console.log(stdout);
-        console.log(stderr);
-        if (err) return reject(err);
+      (async () => {
+        try {
+          const job = await cloudConvert.jobs.create({
+            tasks: {
+              import_upload: { operation: "import/upload" },
+              convert: {
+                operation: "convert",
+                input: "import_upload",
+                output_format: "pptx",
+              },
+              export_file: {
+                operation: "export/url",
+                input: "convert",
+              },
+            },
+          });
 
-        const outputFile = path.join(
-          outputDir,
-          path.parse(inputPath).name + ".pptx"
-        );
+          const uploadTask = job.tasks.find(t => t.name === "import_upload");
 
-        resolve(outputFile);
-      });
+          await cloudConvert.tasks.upload(
+            uploadTask,
+            fs.createReadStream(inputPath)
+          );
+
+          const completedJob = await cloudConvert.jobs.wait(job.id);
+
+          const exportTask = completedJob.tasks.find(
+            t => t.name === "export_file"
+          );
+
+          const fileUrl = exportTask.result.files[0].url;
+
+          const response = await fetch(fileUrl);
+          const buffer = Buffer.from(await response.arrayBuffer());
+
+          const outputFile = path.join(
+            outputDir,
+            path.parse(inputPath).name + ".pptx"
+          );
+
+          fs.writeFileSync(outputFile, buffer);
+
+          resolve(outputFile);
+
+        } catch (error) {
+          reject(error);
+        }
+      })();
 
       return;
     }

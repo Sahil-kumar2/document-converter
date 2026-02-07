@@ -20,9 +20,9 @@ export default function ConversionOptions({
     xlsx: ["pdf"],
     ppt: ["pdf"],
     pptx: ["pdf"],
-    jpg: ["png"],
-    jpeg: ["png"],
-    png: ["jpg"],
+    jpg: ["png", "pdf"],
+    jpeg: ["png", "pdf"],
+    png: ["jpg", "pdf"],
     webp: ["jpg", "png"],
   };
 
