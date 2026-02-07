@@ -2,16 +2,15 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
-import { parsePageRanges } from '../utils/pageRangeParser.js';
 
 /**
- * Split PDF by "each" (one PDF per page) or "range" (one PDF from page ranges).
+ * Split PDF into multiple PDFs based on mode.
  * @param {string} inputPath - Path to uploaded PDF
- * @param {{ splitType: 'each' | 'range', pageRanges?: string }} options
- * @returns {Promise<{ type: 'zip' | 'pdf', path: string, pageCount?: number }>}
+ * @param {{ mode: 'pages' | 'custom' | 'fixed', ranges?: Array<{from: number, to: number}>, mergeAll?: boolean }} options
+ * @returns {Promise<{ type: 'zip' | 'pdf', path: string }>}
  */
 async function splitPdf(inputPath, options) {
-  const { splitType, pageRanges } = options;
+  const { mode, ranges, mergeAll } = options;
   const buffer = fs.readFileSync(inputPath);
   const srcDoc = await PDFDocument.load(buffer);
   const totalPages = srcDoc.getPageCount();
@@ -20,12 +19,13 @@ async function splitPdf(inputPath, options) {
     throw new Error('PDF has no pages');
   }
 
-  if (splitType === 'each') {
-    // One PDF per page → return ZIP
+  // MODE 1: Split into individual pages
+  if (mode === 'pages') {
     const tempDir = path.join(path.dirname(inputPath), `split-${Date.now()}`);
     fs.mkdirSync(tempDir, { recursive: true });
     const pdfPaths = [];
 
+    // Create one PDF per page
     for (let i = 0; i < totalPages; i++) {
       const newDoc = await PDFDocument.create();
       const [copiedPage] = await newDoc.copyPages(srcDoc, [i]);
@@ -36,45 +36,134 @@ async function splitPdf(inputPath, options) {
       pdfPaths.push(outPath);
     }
 
-    const zipPath = path.join(path.dirname(inputPath), `split-${Date.now()}.zip`);
+    // Create ZIP
+    const zipPath = path.join(path.dirname(inputPath), `split-pages-${Date.now()}.zip`);
     await createZipFromFiles(pdfPaths, zipPath);
 
-    // Clean up temp PDFs and temp dir
+    // Cleanup temp files
     pdfPaths.forEach((p) => fs.unlinkSync(p));
     fs.rmdirSync(tempDir);
 
-    return { type: 'zip', path: zipPath, pageCount: totalPages };
+    return { type: 'zip', path: zipPath };
   }
 
-  if (splitType === 'range') {
-    const { indices, error } = parsePageRanges(pageRanges || '', totalPages);
-    if (error) throw new Error(error);
-    if (indices.length === 0) {
-      throw new Error('pageRanges is required for splitType "range" and must be valid (e.g. 1-3,5-7)');
+  // MODE 2 & 3: Custom ranges or Fixed ranges
+  if (mode === 'custom' || mode === 'fixed') {
+    if (!ranges || !Array.isArray(ranges) || ranges.length === 0) {
+      throw new Error(`${mode} mode requires valid ranges array`);
     }
 
-    const newDoc = await PDFDocument.create();
-    const copiedPages = await newDoc.copyPages(srcDoc, indices);
-    copiedPages.forEach((p) => newDoc.addPage(p));
-    const bytes = await newDoc.save();
-    const outPath = path.join(path.dirname(inputPath), `split-range-${Date.now()}.pdf`);
-    fs.writeFileSync(outPath, bytes);
-    return { type: 'pdf', path: outPath, pageCount: indices.length };
+    // Validate all ranges
+    for (const range of ranges) {
+      if (!range.from || !range.to) {
+        throw new Error('Each range must have "from" and "to" properties');
+      }
+      if (range.from < 1 || range.to > totalPages || range.from > range.to) {
+        throw new Error(`Invalid range: ${range.from}-${range.to}. Pages must be between 1 and ${totalPages}`);
+      }
+    }
+
+    // If mergeAll is true, create one PDF with all ranges
+    if (mergeAll) {
+      const mergedDoc = await PDFDocument.create();
+      
+      for (const range of ranges) {
+        const indices = [];
+        for (let p = range.from; p <= range.to; p++) {
+          indices.push(p - 1); // Convert to 0-based
+        }
+        const copiedPages = await mergedDoc.copyPages(srcDoc, indices);
+        copiedPages.forEach((page) => mergedDoc.addPage(page));
+      }
+
+      const bytes = await mergedDoc.save();
+      const outPath = path.join(path.dirname(inputPath), `split-merged-${Date.now()}.pdf`);
+      fs.writeFileSync(outPath, bytes);
+      return { type: 'pdf', path: outPath };
+    }
+
+    // Otherwise, create separate PDFs for each range
+    const tempDir = path.join(path.dirname(inputPath), `split-${Date.now()}`);
+    fs.mkdirSync(tempDir, { recursive: true });
+    const pdfPaths = [];
+
+    for (let i = 0; i < ranges.length; i++) {
+      const range = ranges[i];
+      const newDoc = await PDFDocument.create();
+      
+      // Copy pages in range
+      const indices = [];
+      for (let p = range.from; p <= range.to; p++) {
+        indices.push(p - 1); // Convert to 0-based
+      }
+      
+      const copiedPages = await newDoc.copyPages(srcDoc, indices);
+      copiedPages.forEach((page) => newDoc.addPage(page));
+      
+      // Save this range PDF
+      const bytes = await newDoc.save();
+      const outPath = path.join(tempDir, `range-${i + 1}-pages-${range.from}-${range.to}.pdf`);
+      fs.writeFileSync(outPath, bytes);
+      pdfPaths.push(outPath);
+    }
+
+    // Create ZIP with all range PDFs
+    const zipPath = path.join(path.dirname(inputPath), `split-ranges-${Date.now()}.zip`);
+    await createZipFromFiles(pdfPaths, zipPath);
+
+    // Cleanup temp files
+    pdfPaths.forEach((p) => fs.unlinkSync(p));
+    fs.rmdirSync(tempDir);
+
+    return { type: 'zip', path: zipPath };
   }
 
-  throw new Error('splitType must be "each" or "range"');
+  throw new Error('mode must be "pages", "custom", or "fixed"');
 }
 
+/**
+ * Create a ZIP file from multiple PDF files.
+ * Ensures proper finalization to prevent corrupted ZIPs.
+ */
 function createZipFromFiles(filePaths, zipPath) {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(zipPath);
     const archive = archiver('zip', { zlib: { level: 5 } });
-    output.on('close', () => resolve());
-    archive.on('error', reject);
+    
+    // Handle stream events properly
+    output.on('close', () => {
+      console.log(`ZIP created: ${archive.pointer()} total bytes`);
+      resolve();
+    });
+    
+    output.on('error', (err) => {
+      reject(new Error(`Output stream error: ${err.message}`));
+    });
+    
+    archive.on('error', (err) => {
+      reject(new Error(`Archive error: ${err.message}`));
+    });
+    
+    archive.on('warning', (err) => {
+      if (err.code === 'ENOENT') {
+        console.warn('Archive warning:', err);
+      } else {
+        reject(err);
+      }
+    });
+
+    // Pipe archive to output
     archive.pipe(output);
+
+    // Add all files to archive
     filePaths.forEach((filePath) => {
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
       archive.file(filePath, { name: path.basename(filePath) });
     });
+
+    // Finalize archive - CRITICAL for valid ZIP
     archive.finalize();
   });
 }

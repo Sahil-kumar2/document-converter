@@ -7,17 +7,42 @@ import { spawn, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { PDFDocument } from 'pdf-lib';
 
-const GS_EXE =
-  process.env.GS_EXE ||
-  (process.platform === 'win32' ? 'gswin64c' : 'gs');
+const GS_WINDOWS_CANDIDATES = [
+  'C:\\Program Files\\gs\\gs10.06.0\\bin\\gswin64c.exe',
+  'C:\\Program Files\\gs\\gs10.05.0\\bin\\gswin64c.exe',
+  'C:\\Program Files\\gs\\gs10.04.0\\bin\\gswin64c.exe',
+  'C:\\Program Files\\gs\\gs10.03.0\\bin\\gswin64c.exe',
+];
+
+function isValidGhostscriptBinary(candidatePath) {
+  if (!candidatePath || typeof candidatePath !== 'string') return false;
+  if (!fs.existsSync(candidatePath)) return false;
+  const base = path.basename(candidatePath).toLowerCase();
+  return base === 'gswin64c.exe' || base === 'gs.exe' || base === 'gs';
+}
+
+function resolveGhostscriptExe() {
+  if (process.env.GS_EXE && isValidGhostscriptBinary(process.env.GS_EXE)) return process.env.GS_EXE;
+  if (process.env.GS_PATH && isValidGhostscriptBinary(process.env.GS_PATH)) return process.env.GS_PATH;
+  if (process.platform === 'win32') {
+    for (const candidate of GS_WINDOWS_CANDIDATES) {
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    return 'gswin64c';
+  }
+  return 'gs';
+}
+
+const GS_EXE = resolveGhostscriptExe();
 
 /**
  * Ensure Ghostscript exists BEFORE redaction starts
  */
 function assertGhostscript() {
   try {
-    execSync(`${GS_EXE} -version`, { stdio: 'ignore' });
+    execSync(`"${GS_EXE}" -version`, { stdio: 'ignore' });
   } catch {
     throw new Error(
       `Ghostscript (${GS_EXE}) is not installed or not in PATH. ` +
@@ -84,15 +109,15 @@ async function flattenPdf(inputPath, outputPath, options = {}) {
   try {
     // STEP 1: Rasterize PDF → PNG images (kills ALL text)
     await runGs([
-  '-dSAFER',
-  '-dNOPAUSE',
-  '-dBATCH',
-  '-dNOSAFER',
-  '-sDEVICE=png16m',
-  `-r${dpi}`,
-  `-sOutputFile=${path.join(tempDir, 'page-%03d.png')}`,
-  inputPath,
-]);
+      '-dSAFER',
+      '-dNOPAUSE',
+      '-dBATCH',
+      '-dNOSAFER',
+      '-sDEVICE=png16m',
+      `-r${dpi}`,
+      `-sOutputFile=${path.join(tempDir, 'page-%03d.png')}`,
+      inputPath,
+    ]);
 
 
     const files = fs
@@ -104,23 +129,26 @@ async function flattenPdf(inputPath, outputPath, options = {}) {
       throw new Error('Ghostscript produced no rasterized pages');
     }
 
-    const imagePaths = files.map(f => `"${path.join(tempDir, f)}"`);
+    const imagePaths = files.map(f => path.join(tempDir, f));
 
-    // STEP 2: Assemble images → image-only PDF
-    await runGs([
-      '-dSAFER',
-      '-dNOPAUSE',
-      '-dBATCH',
-      '-dQUIET',
-      '-sDEVICE=pdfwrite',
-      '-dDetectDuplicateImages=false',
-      '-dCompressFonts=false',
-      '-dSubsetFonts=false',
-      '-dPreserveAnnots=false',
-      '-dPreserveOverprintSettings=false',
-      `-sOutputFile="${outputPath}"`,
-      ...imagePaths,
-    ]);
+    // STEP 2: Assemble images → image-only PDF using pdf-lib
+    const outDoc = await PDFDocument.create();
+
+    for (const imagePath of imagePaths) {
+      const imageBytes = fs.readFileSync(imagePath);
+      const image = await outDoc.embedPng(imageBytes);
+      const { width, height } = image;
+      const page = outDoc.addPage([width, height]);
+      page.drawImage(image, {
+        x: 0,
+        y: 0,
+        width,
+        height,
+      });
+    }
+
+    const pdfBytes = await outDoc.save();
+    fs.writeFileSync(outputPath, pdfBytes);
   } finally {
     // Cleanup temp files
     try {

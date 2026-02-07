@@ -1,9 +1,9 @@
 import express from "express";
-import { uploadMultiplePdfs } from "../middleware/multerconfig.js";
+import { uploadSinglePdf, normalizePdfFile } from "../middleware/multerconfig.js";
 import { organizePdfController } from "../controllers/organizePdfController.js";
 
 const router = express.Router();
 
-router.post("/organize", uploadMultiplePdfs, organizePdfController);
+router.post("/organize", uploadSinglePdf, normalizePdfFile, organizePdfController);
 
 export default router;

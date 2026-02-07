@@ -6,7 +6,7 @@ import path from 'path';
 
 /**
  * POST /api/pdf/split
- * Body: pdfFile, splitType ("each" | "range"), pageRanges (required for range)
+ * Body: pdfFile, mode ("pages" | "custom" | "fixed"), ranges (JSON array), mergeAll (boolean)
  */
 async function splitPdf(req, res, next) {
   const uploadedPath = req.file?.path;
@@ -14,26 +14,41 @@ async function splitPdf(req, res, next) {
     return res.status(400).json({ success: false, error: 'PDF file is required (pdfFile)' });
   }
 
-  const splitType = (getBodyValue(req.body, 'splitType') || req.body?.splitType || '').toLowerCase();
-  if (!['each', 'range'].includes(splitType)) {
+  const mode = (getBodyValue(req.body, 'mode') || req.body?.mode || '').toLowerCase();
+  if (!['pages', 'custom', 'fixed'].includes(mode)) {
     return res.status(400).json({
       success: false,
-      error: 'splitType must be "each" or "range"',
+      error: 'mode must be "pages", "custom", or "fixed"',
     });
   }
 
-  const pageRanges = getBodyValue(req.body, 'pageRanges');
-  if (splitType === 'range' && !pageRanges) {
-    return res.status(400).json({
-      success: false,
-      error: 'For splitType "range", pageRanges is required (e.g. 1-3,5-7). Add a form field named "pageRanges".',
-    });
+  const rangesStr = getBodyValue(req.body, 'ranges') || req.body?.ranges;
+  const mergeAllStr = getBodyValue(req.body, 'mergeAll') || req.body?.mergeAll || 'false';
+  const mergeAll = mergeAllStr === 'true' || mergeAllStr === true;
+
+  let ranges = null;
+  if (rangesStr) {
+    try {
+      ranges = JSON.parse(rangesStr);
+      if (!Array.isArray(ranges)) {
+        return res.status(400).json({
+          success: false,
+          error: 'ranges must be a JSON array of {from, to} objects',
+        });
+      }
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid ranges JSON format',
+      });
+    }
   }
 
   try {
     const result = await splitPdfService.splitPdf(uploadedPath, {
-      splitType,
-      pageRanges: pageRanges || undefined,
+      mode,
+      ranges,
+      mergeAll,
     });
 
     const outPath = result.path;

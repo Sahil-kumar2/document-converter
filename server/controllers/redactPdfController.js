@@ -52,8 +52,14 @@ async function redactPdf(req, res, next) {
   const pdfaLevel = getBodyValue(req.body, 'pdfaLevel') || req.body?.pdfaLevel;
 
   try {
-    // Pass redactAreas array directly to service
-    const result = await redactPdfService.redactPdf(uploadedPath, redactAreas);
+    // Pass all redaction inputs to service (areas + optional text)
+    const result = await redactPdfService.redactPdf(uploadedPath, {
+      redactText: hasText ? redactText.trim() : undefined,
+      redactAreas,
+      pageNumbers: pageNumbers || undefined,
+      convertToPdfa,
+      pdfaLevel,
+    });
 
     const outPath = result.path;
     const filename = path.basename(outPath);

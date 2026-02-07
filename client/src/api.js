@@ -50,12 +50,14 @@ export const convertFile = async (file, targetFormat) => {
  * @param {string} [pageRanges] - Required if splitType is "range". Format: "1-3,5-7"
  * @returns {Promise<Blob>} - ZIP file with split PDFs or single PDF
  */
-export const splitPdf = async (pdfFile, splitType, pageRanges = null) => {
+export const splitPdf = async (pdfFile, mode, ranges = null, mergeAll = false) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  formData.append("splitType", splitType);
-  if (pageRanges) {
-    formData.append("pageRanges", pageRanges);
+  formData.append("mode", mode);
+  formData.append("mergeAll", mergeAll.toString());
+  
+  if (ranges && Array.isArray(ranges)) {
+    formData.append("ranges", JSON.stringify(ranges));
   }
 
   return apiClient.post("/api/pdf/split", formData, {
@@ -88,14 +90,21 @@ export const extractPdf = async (pdfFile, pageNumbers) => {
 /**
  * Rotate PDF pages
  * @param {File} pdfFile - PDF file
- * @param {number} rotationAngle - 90, 180, or 270 degrees
- * @param {string} [pageNumbers] - Optional specific pages. Format: "1-3,5"
+ * @param {Object|number} rotationData - Page rotation map {pageIndex: angle} or single angle for all
+ * @param {string} [pageNumbers] - Optional specific pages (legacy). Format: "1-3,5"
  * @returns {Promise<Blob>} - Rotated PDF
  */
-export const rotatePdf = async (pdfFile, rotationAngle, pageNumbers = null) => {
+export const rotatePdf = async (pdfFile, rotationData, pageNumbers = null) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  formData.append("rotationAngle", rotationAngle);
+  
+  // Support both new map format and legacy single angle
+  if (typeof rotationData === 'object' && !Array.isArray(rotationData)) {
+    formData.append("pageRotations", JSON.stringify(rotationData));
+  } else {
+    formData.append("rotationAngle", rotationData);
+  }
+  
   if (pageNumbers) {
     formData.append("pageNumbers", pageNumbers);
   }
