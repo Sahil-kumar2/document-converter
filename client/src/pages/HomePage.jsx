@@ -33,6 +33,7 @@ export default function HomePage() {
     { name: 'PDF to DOCX', icon: '📝', route: '/pdf-to-docx', desc: 'PDF to Word' },
     { name: 'DOCX to PDF', icon: '📄', route: '/docx-to-pdf', desc: 'Word to PDF' },
     { name: 'PDF to XLSX', icon: '📊', route: '/pdf-to-xlsx', desc: 'PDF to Excel' },
+    { name: 'Excel to PDF', icon: '📊', route: '/xlsx-to-pdf', desc: 'Excel to PDF' },
     { name: 'PDF to JPG', icon: '🖼️', route: '/pdf-to-jpg', desc: 'PDF to Image' },
     { name: 'PDF to PNG', icon: '🖼️', route: '/pdf-to-png', desc: 'PDF to Image' },
     { name: 'PDF to HTML', icon: '🌐', route: '/pdf-to-html', desc: 'PDF to Web' },

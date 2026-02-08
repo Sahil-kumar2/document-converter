@@ -40,6 +40,7 @@ import PdfToPngPage from './pages/tools/PdfToPngPage'
 import PdfToHtmlPage from './pages/tools/PdfToHtmlPage'
 import HtmlToPdfPage from './pages/tools/HtmlToPdfPage'
 import PdfToPptPage from './pages/tools/PdfToPptPage'
+import XlsxToPdfPage from "./pages/tools/XlsxToPdfPage.jsx";
 
 
 createRoot(document.getElementById('root')).render(
@@ -84,6 +85,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/pdf-to-html" element={<PdfToHtmlPage />} />
         <Route path="/html-to-pdf" element={<HtmlToPdfPage />} />
         <Route path="/pdf-to-pptx" element={<PdfToPptPage />} />
+        <Route path="/xlsx-to-pdf" element={<XlsxToPdfPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
