@@ -56,9 +56,15 @@ async function redactPdf(inputPath, optionsOrAreas) {
 
   const black = rgb(0, 0, 0);
 
-  normalizedAreas.forEach(area => {
+  console.log(`[Redact] Total redaction areas: ${normalizedAreas.length}`);
+  let drawnCount = 0;
+
+  normalizedAreas.forEach((area, idx) => {
     const page = pages[area.pageIndex];
-    if (!page) return;
+    if (!page) {
+      console.warn(`[Redact] Page ${area.pageIndex} not found`);
+      return;
+    }
 
     const { width, height } = page.getSize();
     const x = Math.max(0, Math.min(area.x, width));
@@ -66,6 +72,12 @@ async function redactPdf(inputPath, optionsOrAreas) {
     const w = Math.min(area.width, width - x);
     const h = Math.min(area.height, height - y);
 
+    if (w <= 0 || h <= 0) {
+      console.warn(`[Redact] Area ${idx} has invalid dimensions: w=${w}, h=${h}`);
+      return;
+    }
+
+    console.log(`[Redact] Drawing area ${idx} on page ${area.pageIndex}: x=${x}, y=${y}, w=${w}, h=${h}, source=${area.source}`);
     page.drawRectangle({
       x,
       y,
@@ -73,31 +85,44 @@ async function redactPdf(inputPath, optionsOrAreas) {
       height: h,
       color: black,
     });
+    drawnCount++;
   });
+
+  console.log(`[Redact] Successfully drawn ${drawnCount}/${normalizedAreas.length} redaction areas`);
 
   const preFlattenPath = path.join(
     path.dirname(inputPath),
     `redact-pre-${Date.now()}.pdf`
   );
   fs.writeFileSync(preFlattenPath, await doc.save());
+  console.log(`[Redact] Saved pre-flatten PDF to: ${preFlattenPath}`);
 
   const hasTextRedaction = normalizedAreas.some(a => a.source === 'text');
+  const hasAreaRedaction = normalizedAreas.some(a => a.source === 'area' || !a.source);
 
   let finalPath = preFlattenPath;
 
-  if (hasTextRedaction) {
+  // Always flatten to ensure redactions are permanent and text is unrecoverable
+  // This rasterizes the entire page, making text coordinates unrecoverable
+  console.log(`[Redact] Redaction types - text: ${hasTextRedaction}, area: ${hasAreaRedaction}`);
+  if (drawnCount > 0) {
     const flattenPath = path.join(
       path.dirname(inputPath),
       `redacted-${Date.now()}.pdf`
     );
     try {
+      console.log(`[Redact] Flattening PDF to ensure permanent redaction...`);
       await flattenPdf(preFlattenPath, flattenPath, { dpi: 300 });
+      console.log(`[Redact] Flattening complete. Output: ${flattenPath}`);
       finalPath = flattenPath;
+    } catch (flattenErr) {
+      console.error(`[Redact] Flattening failed: ${flattenErr.message}`);
+      throw flattenErr;
     } finally {
       try { fs.unlinkSync(preFlattenPath); } catch (_) {}
     }
   } else {
-    finalPath = preFlattenPath;
+    console.warn(`[Redact] No redactions were drawn! Output will be identical to input.`);
   }
 
   if (convertToPdfa) {
@@ -156,11 +181,12 @@ function normalizeRedactions({ redactAreas, pages, totalPages, pageIndices }) {
       typeof raw.widthRatio === 'number' &&
       typeof raw.heightRatio === 'number'
     ) {
+      // Convert from frontend coordinates (0-1 range, top-left origin) to PDF coordinates
       x = raw.xRatio * width;
-      const rectHeight = raw.heightRatio * height;
-      y = height - (raw.yRatio * height) - rectHeight;
       w = raw.widthRatio * width;
-      h = rectHeight;
+      h = raw.heightRatio * height;
+      // PDF has origin at BOTTOM-LEFT, so flip Y: y_pdf = height - y_display - h
+      y = height - (raw.yRatio * height) - h;
     } else if (
       typeof raw.x === 'number' &&
       typeof raw.y === 'number' &&
@@ -174,6 +200,13 @@ function normalizeRedactions({ redactAreas, pages, totalPages, pageIndices }) {
     } else {
       return;
     }
+
+    // Validate coordinates are within page bounds
+    if (w <= 0 || h <= 0) return;
+    x = Math.max(0, Math.min(x, width));
+    y = Math.max(0, Math.min(y, height));
+    w = Math.min(w, width - x);
+    h = Math.min(h, height - y);
 
     if (w <= 0 || h <= 0) return;
 

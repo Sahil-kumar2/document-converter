@@ -38,10 +38,35 @@ async function redactPdf(req, res, next) {
           error: 'redactAreas must be a JSON array',
         });
       }
+      // Validate each redaction area
+      for (const area of redactAreas) {
+        if (!area || typeof area !== 'object') {
+          return res.status(400).json({
+            success: false,
+            error: 'Each redaction area must be an object',
+          });
+        }
+        const hasRatio = typeof area.xRatio === 'number' && typeof area.yRatio === 'number' &&
+                        typeof area.widthRatio === 'number' && typeof area.heightRatio === 'number';
+        const hasAbsolute = typeof area.x === 'number' && typeof area.y === 'number' &&
+                           typeof area.width === 'number' && typeof area.height === 'number';
+        if (!hasRatio && !hasAbsolute) {
+          return res.status(400).json({
+            success: false,
+            error: 'Each redaction area must have either ratio coordinates (xRatio, yRatio, etc) or absolute coordinates (x, y, width, height)',
+          });
+        }
+        if (!Number.isInteger(area.pageIndex) && !Number.isInteger(area.page)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Each redaction area must have a pageIndex',
+          });
+        }
+      }
     } catch (parseErr) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid redactAreas JSON format',
+        error: 'Invalid redactAreas JSON format: ' + parseErr.message,
       });
     }
   }

@@ -221,14 +221,13 @@ export default function RedactPdfPanel({
 
         mapped.forEach((item) => {
           if (item.end <= idx || item.start >= end) return;
-          const topY = viewport.height - item.y - item.height;
           minX = Math.min(minX, item.x);
-          minY = Math.min(minY, topY);
+          minY = Math.min(minY, item.y);
           maxX = Math.max(maxX, item.x + item.width);
-          maxY = Math.max(maxY, topY + item.height);
+          maxY = Math.max(maxY, item.y + item.height);
         });
 
-        if (minX !== Infinity) {
+        if (minX !== Infinity && minY !== Infinity) {
           matches.push({
             id: `text-${pageIndex}-${idx}-${matches.length}`,
             pageIndex,
