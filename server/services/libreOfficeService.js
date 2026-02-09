@@ -4,6 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import archiver from "archiver";
 import CloudConvert from "cloudconvert";
+import puppeteer from "puppeteer";
 
 const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
@@ -63,22 +64,57 @@ export const runConversion = (inputPath, outputDir, format) => {
     }
 
     // ===============================
-    // HTML → PDF
+    // HTML → PDF (Puppeteer)
     // ===============================
     if (inputExt === ".html" && safeFormat === "pdf") {
-      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
-
-      exec(
-        `"${WKHTMLTOPDF_PATH}" "${inputPath}" "${outputFile}"`,
-        (err, stdout, stderr) => {
-          console.log(stdout);
-          console.log(stderr);
-          if (err) return reject(err);
-          resolve(outputFile);
-        }
+      const outputFile = path.join(
+        outputDir,
+        path.parse(inputPath).name + ".pdf"
       );
+
+      (async () => {
+        try {
+          const browser = await puppeteer.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          });
+
+          const page = await browser.newPage();
+
+          // Load local HTML file
+          await page.goto(`file://${inputPath}`, {
+            waitUntil: "networkidle0",
+          });
+
+          // Optional viewport (prevents layout breaking)
+          await page.setViewport({
+            width: 1280,
+            height: 800,
+          });
+
+          await page.pdf({
+            path: outputFile,
+            format: "A4",
+            printBackground: true,
+            margin: {
+              top: "20mm",
+              bottom: "20mm",
+              left: "15mm",
+              right: "15mm",
+            },
+          });
+
+          await browser.close();
+
+          resolve(outputFile);
+        } catch (error) {
+          reject(error);
+        }
+      })();
+
       return;
     }
+
 
     // ===============================
     // PDF → HTML
