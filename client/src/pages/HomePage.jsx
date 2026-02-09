@@ -13,6 +13,7 @@ export default function HomePage() {
     { name: 'Rotate Pages', icon: '🔄', route: '/rotate-pages', desc: 'Rotate PDF pages' },
     { name: 'Crop PDF', icon: '🔪', route: '/crop-pdf', desc: 'Trim PDF pages' },
     { name: 'Add Watermark', icon: '💧', route: '/watermark-pdf', desc: 'Add watermark' },
+    { name: 'Add Page Numbers', icon: '🔢', route: '/add-page-numbers', desc: 'Add page numbers' },
     { name: 'Redact PDF', icon: '🖍️', route: '/redact-pdf', desc: 'Hide sensitive info' },
     { name: 'Repair PDF', icon: '🔧', route: '/repair-pdf', desc: 'Fix corrupted PDF' },
     { name: 'Convert to PDF/A', icon: '📋', route: '/pdf-to-pdfa', desc: 'Archival format' },

@@ -260,6 +260,37 @@ export const convertToPdfa = async (pdfFile, pdfaLevel = "PDF/A-2b") => {
   });
 };
 
+/**
+ * Add page numbers to PDF
+ * @param {File} pdfFile - PDF file
+ * @param {Object} options - Configuration options
+ * @returns {Promise<Blob>} - PDF with page numbers
+ */
+export const addPageNumbers = async (pdfFile, options = {}) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+  
+  if (options.position) formData.append("position", options.position);
+  if (options.margin) formData.append("margin", options.margin);
+  if (options.startPage !== undefined) formData.append("startPage", options.startPage);
+  if (options.endPage !== undefined) formData.append("endPage", options.endPage);
+  if (options.textContent) formData.append("textContent", options.textContent);
+  if (options.fontFamily) formData.append("fontFamily", options.fontFamily);
+  if (options.fontSize !== undefined) formData.append("fontSize", options.fontSize);
+  if (options.bold !== undefined) formData.append("bold", options.bold);
+  if (options.italic !== undefined) formData.append("italic", options.italic);
+  if (options.underline !== undefined) formData.append("underline", options.underline);
+  if (options.textColor) formData.append("textColor", options.textColor);
+  if (options.pageMode) formData.append("pageMode", options.pageMode);
+
+  return apiClient.post("/api/pdf/add-page-numbers", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
 // ============================================================
 // IMAGE OPERATIONS APIs
 // ============================================================

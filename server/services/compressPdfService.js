@@ -6,10 +6,9 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 /**
- * Compression philosophy:
- * low    -> high quality, small reduction (but must shrink)
- * medium -> balance
- * high   -> aggressive reduction
+ * low    -> light optimization
+ * medium -> strong
+ * high   -> aggressive
  */
 const GS_LEVEL_MAP = {
   low: '/printer',
@@ -18,50 +17,65 @@ const GS_LEVEL_MAP = {
 };
 
 const GS_LEVEL_FLAGS = {
-  // ✅ FIXED LOW → now it will always reduce a bit
+  /**
+   * ✅ LOW → very light, high quality
+   */
   low: [
     '-dDownsampleColorImages=true',
     '-dDownsampleGrayImages=true',
     '-dDownsampleMonoImages=true',
+
     '-dEncodeColorImages=true',
 
-    '-dColorImageResolution=170',
-    '-dGrayImageResolution=170',
-    '-dMonoImageResolution=250',
+    '-dColorImageResolution=175',
+    '-dGrayImageResolution=175',
+    '-dMonoImageResolution=230',
 
     '-dAutoFilterColorImages=false',
     '-dAutoFilterGrayImages=false',
     '-dColorImageFilter=/DCTEncode',
     '-dGrayImageFilter=/DCTEncode',
 
-    '-dJPEGQ=78',
+    '-dJPEGQ=82',
   ],
 
+  /**
+   * ✅ MEDIUM → noticeable compression
+   */
   medium: [
     '-dDownsampleColorImages=true',
     '-dDownsampleGrayImages=true',
     '-dDownsampleMonoImages=true',
+
     '-dColorImageResolution=150',
     '-dGrayImageResolution=150',
     '-dMonoImageResolution=200',
+
     '-dAutoFilterColorImages=false',
     '-dAutoFilterGrayImages=false',
     '-dColorImageFilter=/DCTEncode',
     '-dGrayImageFilter=/DCTEncode',
+
     '-dJPEGQ=60',
   ],
 
+  /**
+   * ✅ HIGH → heavy compression
+   */
   high: [
     '-dDownsampleColorImages=true',
     '-dDownsampleGrayImages=true',
     '-dDownsampleMonoImages=true',
+
     '-dColorImageResolution=72',
     '-dGrayImageResolution=72',
     '-dMonoImageResolution=150',
+
     '-dAutoFilterColorImages=false',
     '-dAutoFilterGrayImages=false',
     '-dColorImageFilter=/DCTEncode',
     '-dGrayImageFilter=/DCTEncode',
+
     '-dJPEGQ=40',
   ],
 };
@@ -107,11 +121,6 @@ async function ensureGhostscriptAvailable(gsCommand) {
   }
 }
 
-/**
- * Compress PDF
- * @param {string} inputPath
- * @param {'low'|'medium'|'high'} level
- */
 export async function compressPdf(inputPath, level = 'medium') {
   if (!fs.existsSync(inputPath)) {
     throw new Error('Input file not found');
@@ -124,7 +133,7 @@ export async function compressPdf(inputPath, level = 'medium') {
     `compressed-${Date.now()}.pdf`
   );
 
-  const normalizedLevel = (level || 'medium').toString().trim().toLowerCase();
+  const normalizedLevel = (level || 'medium').toLowerCase();
   const pdfSettings = GS_LEVEL_MAP[normalizedLevel] || GS_LEVEL_MAP.medium;
   const levelFlags = GS_LEVEL_FLAGS[normalizedLevel] || GS_LEVEL_FLAGS.medium;
 
@@ -138,7 +147,6 @@ export async function compressPdf(inputPath, level = 'medium') {
     '-dQUIET',
     '-dBATCH',
 
-    // smart optimizations
     '-dDetectDuplicateImages=true',
     '-dCompressFonts=true',
     '-dSubsetFonts=true',
@@ -152,16 +160,10 @@ export async function compressPdf(inputPath, level = 'medium') {
 
   const command = `"${gsCommand}" ${args.join(' ')}`;
 
-  try {
-    await execAsync(command, {
-      windowsHide: true,
-      maxBuffer: 20 * 1024 * 1024,
-    });
-  } catch (error) {
-    const message =
-      error?.stderr || error?.message || 'Ghostscript compression failed';
-    throw new Error(`Ghostscript error: ${message}`);
-  }
+  await execAsync(command, {
+    windowsHide: true,
+    maxBuffer: 20 * 1024 * 1024,
+  });
 
   if (!fs.existsSync(outputPath)) {
     throw new Error('Compression failed: output file not created');
@@ -169,17 +171,13 @@ export async function compressPdf(inputPath, level = 'medium') {
 
   const compressedSize = fs.statSync(outputPath).size;
 
-  /**
-   * Safety:
-   * If compression makes file larger, return original.
-   */
   if (compressedSize >= originalSize) {
     fs.unlinkSync(outputPath);
     return {
       outputPath: inputPath,
       originalSize,
       compressedSize: originalSize,
-      note: 'File already optimized, returned original',
+      note: 'File already optimized',
     };
   }
 

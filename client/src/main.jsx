@@ -20,6 +20,7 @@ import WatermarkPdfPage from './pages/tools/WatermarkPdfPage'
 import RedactPdfPage from './pages/tools/RedactPdfPage'
 import RepairPdfPage from './pages/tools/RepairPdfPage'
 import PdfaToPdfPage from './pages/tools/PdfaToPdfPage'
+import AddPageNumbersPage from './pages/tools/AddPageNumbersPage'
 
 // Image Tools
 import BlackWhitePage from './pages/tools/BlackWhitePage'
@@ -62,6 +63,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/redact-pdf" element={<RedactPdfPage />} />
         <Route path="/repair-pdf" element={<RepairPdfPage />} />
         <Route path="/pdf-to-pdfa" element={<PdfaToPdfPage />} />
+        <Route path="/add-page-numbers" element={<AddPageNumbersPage />} />
         
         {/* Image Tools */}
         <Route path="/black-white-image" element={<BlackWhitePage />} />
