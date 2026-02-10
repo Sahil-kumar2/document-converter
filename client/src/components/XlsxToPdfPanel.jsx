@@ -2,7 +2,7 @@ import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
 export default function XlsxToPdfPanel({
-  file: excelFile,
+  files,
   loading,
   setLoading,
   setResult,
@@ -10,18 +10,25 @@ export default function XlsxToPdfPanel({
 }) {
 
   const handleConvert = async () => {
-    if (!excelFile) {
-      setResult({ success: false, error: "Please select an Excel file" });
+    if (!files || files.length === 0) {
+      setResult({ success: false, error: "Please select Excel file(s)" });
       return;
     }
 
     setLoading(true);
+
     try {
-      const response = await convertFile(excelFile, "pdf");
-      // If your backend uses different route, change "pdf" to "excel-to-pdf"
+      const response = await convertFile(files, "pdf");
 
       setResultBlob(response.data);
-      setResult({ success: true, fileName: "converted.pdf" });
+
+      setResult({
+        success: true,
+        fileName:
+          files.length > 1
+            ? "converted-files.zip"
+            : "converted.pdf"
+      });
 
     } catch (error) {
       setResult({ success: false, error: getErrorMessage(error) });
@@ -36,11 +43,14 @@ export default function XlsxToPdfPanel({
         Excel to PDF
       </h3>
 
-      {excelFile && (
+      {files && files.length > 0 ? (
         <>
           <div className="mb-4 bg-green-50 p-4 rounded">
             <p className="text-sm text-green-800">
               Convert Microsoft Excel (.xls, .xlsx) files to PDF format.
+            </p>
+            <p className="text-sm mt-2">
+              {files.length} file(s) selected
             </p>
           </div>
 
@@ -52,11 +62,9 @@ export default function XlsxToPdfPanel({
             {loading ? "Converting..." : "Convert to PDF"}
           </button>
         </>
-      )}
-
-      {!excelFile && (
+      ) : (
         <div className="bg-green-50 p-4 rounded text-center text-green-800">
-          <p>Upload an Excel file above to convert to PDF</p>
+          <p>Upload Excel file(s) above to convert to PDF</p>
         </div>
       )}
     </>

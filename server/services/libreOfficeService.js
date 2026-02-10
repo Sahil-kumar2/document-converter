@@ -33,7 +33,8 @@ export const runConversion = (inputPath, outputDir, format) => {
     // PDF → DOCX
     // ===============================
     if (inputExt === ".pdf" && safeFormat === "docx") {
-      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".docx");
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
+      const outputFile = path.join(outputDir, baseName + ".docx");
       const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToDocx.py");
 
       const command = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
@@ -50,7 +51,8 @@ export const runConversion = (inputPath, outputDir, format) => {
     // PDF → XLSX
     // ===============================
     if (inputExt === ".pdf" && safeFormat === "xlsx") {
-      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".xlsx");
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
+      const outputFile = path.join(outputDir, baseName + ".xlsx");
       const scriptPath = path.join(PYTHON_SCRIPTS_DIR, "pdfToExcel.py");
 
       const command = `"${PYTHON_PATH}" "${scriptPath}" "${inputPath}" "${outputFile}"`;
@@ -67,10 +69,8 @@ export const runConversion = (inputPath, outputDir, format) => {
     // HTML → PDF (Puppeteer)
     // ===============================
     if (inputExt === ".html" && safeFormat === "pdf") {
-      const outputFile = path.join(
-        outputDir,
-        path.parse(inputPath).name + ".pdf"
-      );
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
+      const outputFile = path.join(outputDir, baseName + ".pdf");
 
       (async () => {
         try {
@@ -120,7 +120,8 @@ export const runConversion = (inputPath, outputDir, format) => {
     // PDF → HTML
     // ===============================
     if (inputExt === ".pdf" && safeFormat === "html") {
-      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".html");
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
+      const outputFile = path.join(outputDir, baseName + ".html");
 
       exec(
         `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`,
@@ -141,7 +142,8 @@ export const runConversion = (inputPath, outputDir, format) => {
       [".jpg", ".jpeg", ".png", ".webp"].includes(inputExt) &&
       safeFormat === "pdf"
     ) {
-      const outputFile = path.join(outputDir, path.parse(inputPath).name + ".pdf");
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
+      const outputFile = path.join(outputDir, baseName + ".pdf");
 
       exec(
         `"${MAGICK_PATH}" convert "${inputPath}" -quality 100 "${outputFile}"`,
@@ -162,7 +164,7 @@ export const runConversion = (inputPath, outputDir, format) => {
       [".jpg", ".jpeg", ".png", ".webp", ".pdf"].includes(inputExt) &&
       ["png", "jpg", "jpeg"].includes(safeFormat)
     ) {
-      const baseName = path.parse(inputPath).name;
+      const baseName = path.parse(inputPath).name + "-" + Date.now();
 
       if (inputExt === ".pdf") {
         const outputPattern = path.join(outputDir, `${baseName}-%03d.${safeFormat}`);
@@ -248,10 +250,8 @@ export const runConversion = (inputPath, outputDir, format) => {
           const response = await fetch(fileUrl);
           const buffer = Buffer.from(await response.arrayBuffer());
 
-          const outputFile = path.join(
-            outputDir,
-            path.parse(inputPath).name + ".pptx"
-          );
+          const baseName = path.parse(inputPath).name + "-" + Date.now();
+          const outputFile = path.join(outputDir, baseName + ".pptx");
 
           fs.writeFileSync(outputFile, buffer);
 
@@ -284,19 +284,12 @@ export const runConversion = (inputPath, outputDir, format) => {
         console.log("⚠️ LibreOffice stderr:", stderr);
         if (err) return reject(err);
 
-        fs.readdir(outputDir, (err, files) => {
-          if (err) return reject(err);
-          if (!files.length) return reject("No output file created");
+        const outputFile = path.join(
+          outputDir,
+          path.parse(inputPath).name + "." + safeFormat
+        );
 
-          const newestFile = files
-            .map(f => ({
-              file: path.join(outputDir, f),
-              time: fs.statSync(path.join(outputDir, f)).mtime.getTime(),
-            }))
-            .sort((a, b) => b.time - a.time)[0].file;
-
-          resolve(newestFile);
-        });
+        resolve(outputFile);
       }
     );
   });

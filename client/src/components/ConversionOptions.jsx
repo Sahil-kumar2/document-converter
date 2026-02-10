@@ -5,7 +5,7 @@ import React from "react";
  * Displays available conversion options based on file type
  */
 export default function ConversionOptions({
-  file,
+  files,
   selectedFormat,
   onFormatChange,
   disabled = false,
@@ -26,9 +26,10 @@ export default function ConversionOptions({
     webp: ["jpg", "png"],
   };
 
-  if (!file) return null;
+  if (!files || files.length === 0) return null;
 
-  const ext = getFileExtension(file.name);
+  // Use first file to determine conversion options
+  const ext = getFileExtension(files[0].name);
   const options = conversionRules[ext] || [];
 
   if (options.length === 0) return null;
@@ -53,14 +54,13 @@ export default function ConversionOptions({
         </select>
       </div>
 
-      <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-        <p>
-          <span className="font-semibold">File:</span> {file.name}
-        </p>
-        <p>
-          <span className="font-semibold">Size:</span>{" "}
-          {(file.size / 1024 / 1024).toFixed(2)} MB
-        </p>
+      <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg space-y-1">
+        <p className="font-semibold">Selected Files:</p>
+        {files.map((file, index) => (
+          <div key={index}>
+            {file.name} — {(file.size / 1024 / 1024).toFixed(2)} MB
+          </div>
+        ))}
       </div>
     </div>
   );

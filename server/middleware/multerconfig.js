@@ -106,6 +106,10 @@ export const uploadPdfWithWatermark = upload.fields([
 // Generic single file (convert tools) - field name: "file"
 export const uploadSingleFile = upload.single("file");
 
+
+// Generic multiple files (convert tools) - field name: "files"
+export const uploadMultipleFiles = upload.array("files", 10);
+
 // Single image file - field name: "image"
 export const uploadSingleImage = upload.single("image");
 

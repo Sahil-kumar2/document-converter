@@ -4,39 +4,43 @@ import FileUpload from '../components/FileUpload'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ResultPreview from '../components/ResultPreview'
 
-/**
- * ToolPageLayout - Safe wrapper for existing tool components
- * Uses conditional rendering to preserve layout stability
- */
 export default function ToolPageLayout({
   title,
   icon,
   description,
   acceptedFiles,
-  ToolComponent, // Existing component (CropPdfPanel, etc.)
-  toolProps = {}, // Additional props for ToolComponent
-  children, // For custom tool UI
+  ToolComponent,
+  toolProps = {},
+  children,
 }) {
   const navigate = useNavigate()
-  const [file, setFile] = useState(null)
+
+  const [files, setFiles] = useState([])
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [resultBlob, setResultBlob] = useState(null)
 
-  const handleFileSelect = (selectedFile) => {
-    setFile(selectedFile)
+  const handleFileSelect = (selectedFiles) => {
+    if (!selectedFiles) return
+
+    const fileArray = Array.isArray(selectedFiles)
+      ? selectedFiles
+      : [selectedFiles]
+
+    setFiles(fileArray)
     setResult(null)
     setResultBlob(null)
   }
 
   const handleReset = () => {
-    setFile(null)
+    setFiles([])
     setResult(null)
     setResultBlob(null)
   }
 
   const handleDownload = () => {
     if (!resultBlob || !result?.fileName) return
+
     const url = window.URL.createObjectURL(resultBlob)
     const a = document.createElement('a')
     a.href = url
@@ -67,8 +71,9 @@ export default function ToolPageLayout({
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Landing State - Upload */}
-        {!file && !result && (
+
+        {/* Upload State */}
+        {files.length === 0 && !result && (
           <div className="text-center mb-12">
             <div className="text-8xl mb-6">{icon}</div>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">{title}</h2>
@@ -77,33 +82,41 @@ export default function ToolPageLayout({
             </p>
 
             <div className="bg-white rounded-xl shadow-lg p-12 max-w-xl mx-auto border border-gray-200">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Select your file</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Select your file(s)
+              </h3>
+
               <FileUpload
                 onFileSelect={handleFileSelect}
                 accept={acceptedFiles}
                 disabled={loading}
+                multiple
               />
+
               <p className="text-sm text-gray-600 mt-4">
-                Upload a file to get started
+                Upload one or more files to get started
               </p>
             </div>
           </div>
         )}
 
-        {/* Tool State - Show existing component WITHOUT modification */}
-        {file && !result && (
+        {/* Tool State */}
+        {files.length > 0 && !result && (
           <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
             <div className="mb-6">
               <p className="text-sm text-gray-600">
-                <strong>File:</strong> {file.name}
+                <strong>Selected Files:</strong>
               </p>
+              {files.map((f, index) => (
+                <p key={index} className="text-sm text-gray-700">
+                  {f.name}
+                </p>
+              ))}
             </div>
 
-            {/* CRITICAL: Existing component used as black box */}
             {ToolComponent && (
               <ToolComponent
-                pdfFile={file}
-                file={file}
+                files={files}
                 loading={loading}
                 setLoading={setLoading}
                 setResult={setResult}
@@ -112,7 +125,6 @@ export default function ToolPageLayout({
               />
             )}
 
-            {/* Custom children for simple tools */}
             {children}
           </div>
         )}

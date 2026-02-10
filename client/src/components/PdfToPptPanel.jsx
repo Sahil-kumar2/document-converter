@@ -5,41 +5,52 @@ import LoadingSpinner from "./LoadingSpinner";
 import ResultPreview from "./ResultPreview";
 
 export default function PdfToPptPanel() {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [resultBlob, setResultBlob] = useState(null);
 
-  const handleFileSelect = (selectedFile) => {
-    if (!selectedFile) return;
+  const handleFileSelect = (selectedFiles) => {
+    if (!selectedFiles || selectedFiles.length === 0) return;
 
-    const ext = selectedFile.name.split(".").pop().toLowerCase();
+    const validFiles = [];
 
-    if (ext !== "pdf") {
-      setResult({
-        success: false,
-        error: "Only PDF files are allowed.",
-      });
-      return;
+    for (const file of selectedFiles) {
+      const ext = file.name.split(".").pop().toLowerCase();
+
+      if (ext !== "pdf") {
+        setResult({
+          success: false,
+          error: "Only PDF files are allowed.",
+        });
+        return;
+      }
+
+      validFiles.push(file);
     }
 
-    setFile(selectedFile);
+    setFiles(validFiles);
     setResult(null);
   };
 
   const handleConvert = async () => {
-    if (!file) return;
+    if (!files || files.length === 0) return;
 
     setLoading(true);
+
     try {
-      const response = await convertFile(file, "pptx");
+      const response = await convertFile(files, "pptx");
 
       setResultBlob(response.data);
 
       setResult({
         success: true,
-        fileName: "converted.pptx",
+        fileName:
+          files.length > 1
+            ? "converted-files.zip"
+            : "converted.pptx",
       });
+
     } catch (err) {
       setResult({
         success: false,
@@ -56,14 +67,14 @@ export default function PdfToPptPanel() {
     const url = window.URL.createObjectURL(resultBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "converted.pptx";
+    a.download = result.fileName;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
   };
 
   const handleReset = () => {
-    setFile(null);
+    setFiles([]);
     setResult(null);
     setResultBlob(null);
   };
@@ -71,15 +82,19 @@ export default function PdfToPptPanel() {
   return (
     <div className="space-y-6">
 
-      {!file && !result && (
-        <FileUpload onFileSelect={handleFileSelect} disabled={loading} />
+      {files.length === 0 && !result && (
+        <FileUpload
+          onFileSelect={handleFileSelect}
+          disabled={loading}
+          multiple
+        />
       )}
 
-      {file && !result && (
+      {files.length > 0 && !result && (
         <button
           onClick={handleConvert}
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
         >
           Convert PDF to PPT
         </button>

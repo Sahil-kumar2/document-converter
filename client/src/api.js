@@ -26,18 +26,23 @@ const apiClient = axios.create({
  * @param {string} targetFormat - Target format (e.g., 'docx', 'pdf', 'png')
  * @returns {Promise<Blob>} - Converted file as blob
  */
-export const convertFile = async (file, targetFormat) => {
+export const convertFile = async (files, targetFormat) => {
   const formData = new FormData();
-  formData.append("file", file);
+
+  // Ensure files is always treated as an array
+  const fileArray = Array.isArray(files) ? files : [files];
+
+  fileArray.forEach((file) => {
+    formData.append("files", file);   // IMPORTANT: must match backend
+  });
+
   formData.append("targetFormat", targetFormat);
 
   return apiClient.post("/api/convert", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
     responseType: "blob",
   });
 };
+
 
 // ============================================================
 // PDF OPERATIONS APIs
