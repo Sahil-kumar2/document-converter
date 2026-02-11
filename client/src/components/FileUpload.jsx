@@ -84,7 +84,7 @@ export default function FileUpload({
           Browse Files
         </button>
         <p className="text-sm text-gray-400 mt-2">
-          Max file size 1GB
+          Max file size depends on the tool
         </p>
       </div>
     </div>

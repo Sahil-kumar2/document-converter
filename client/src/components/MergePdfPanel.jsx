@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { mergePdfs, getErrorMessage } from "../api";
+import { validateFileSize, formatBytes } from "../utils/uploadLimits";
 
 export default function MergePdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
   const [mergePdfFiles, setMergePdfFiles] = useState([]);
@@ -23,10 +24,25 @@ export default function MergePdfPanel({ pdfFile, loading, setLoading, setResult,
   const handleAddFiles = (e) => {
     const files = Array.from(e.target.files || []);
     const pdfFiles = files.filter((f) => f.type === "application/pdf");
+
+    const oversized = pdfFiles.filter((f) => !validateFileSize(f).valid);
+    const validFiles = pdfFiles.filter((f) => validateFileSize(f).valid);
+
     if (pdfFiles.length !== files.length) {
       setResult({ success: false, error: "Some files were not PDFs and were skipped" });
     }
-    setMergePdfFiles((prev) => [...prev, ...pdfFiles]);
+
+    if (oversized.length > 0) {
+      const { limit } = validateFileSize(oversized[0]);
+      setResult({
+        success: false,
+        error: `Some files exceed the size limit (${formatBytes(limit)}).`,
+      });
+    }
+
+    if (validFiles.length > 0) {
+      setMergePdfFiles((prev) => [...prev, ...validFiles]);
+    }
   };
 
   const handleRemoveFile = (index) => {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import FileUpload from '../components/FileUpload'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ResultPreview from '../components/ResultPreview'
+import { validateFileSize, formatBytes } from '../utils/uploadLimits'
 
 /**
  * ToolPageLayout - Safe wrapper for existing tool components
@@ -22,8 +23,21 @@ export default function ToolPageLayout({
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [resultBlob, setResultBlob] = useState(null)
+  const [uploadError, setUploadError] = useState(null)
 
   const handleFileSelect = (selectedFile) => {
+    if (!selectedFile) return
+
+    const { valid, limit } = validateFileSize(selectedFile)
+    if (!valid) {
+      setUploadError(`File too large. Max allowed: ${formatBytes(limit)}.`)
+      setFile(null)
+      setResult(null)
+      setResultBlob(null)
+      return
+    }
+
+    setUploadError(null)
     setFile(selectedFile)
     setResult(null)
     setResultBlob(null)
@@ -33,6 +47,7 @@ export default function ToolPageLayout({
     setFile(null)
     setResult(null)
     setResultBlob(null)
+    setUploadError(null)
   }
 
   const handleDownload = () => {
@@ -80,9 +95,12 @@ export default function ToolPageLayout({
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Select your file</h3>
               <FileUpload
                 onFileSelect={handleFileSelect}
-                accept={acceptedFiles}
+                acceptedTypes={acceptedFiles}
                 disabled={loading}
               />
+              {uploadError && (
+                <p className="text-sm text-red-600 mt-4">{uploadError}</p>
+              )}
               <p className="text-sm text-gray-600 mt-4">
                 Upload a file to get started
               </p>

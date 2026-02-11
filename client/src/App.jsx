@@ -7,6 +7,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import PdfToolsPanel from "./components/PdfToolsPanel";
 import ImageToolsPanel from "./components/ImageToolsPanel";
 import ScanToPdfPanel from "./components/ScanToPdfPanel";
+import { validateFileSize, formatBytes } from "./utils/uploadLimits";
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -34,6 +35,16 @@ export default function App() {
 
   const handleFileChange = (selectedFile) => {
     if (!selectedFile) return;
+
+    const { valid, limit } = validateFileSize(selectedFile);
+    if (!valid) {
+      setResult({
+        success: false,
+        error: `File too large. Max allowed: ${formatBytes(limit)}.`,
+      });
+      setFile(null);
+      return;
+    }
 
     const ext = getFileExtension(selectedFile.name);
 

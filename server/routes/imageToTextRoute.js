@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadSingleImage } from "../middleware/multerconfig.js";
+import { uploadSingleImage, validateTotalUploadSize } from "../middleware/multerconfig.js";
 import { imageToText } from "../controllers/imageToTextController.js";
 
 const router = express.Router();
@@ -7,6 +7,7 @@ const router = express.Router();
 router.post(
   "/getText",
   uploadSingleImage,
+  validateTotalUploadSize(),
   imageToText
 );
 
