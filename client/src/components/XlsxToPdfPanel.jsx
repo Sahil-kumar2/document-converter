@@ -1,7 +1,7 @@
 import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
-export default function HtmlToPdfPanel({
+export default function XlsxToPdfPanel({
   files,
   loading,
   setLoading,
@@ -11,7 +11,7 @@ export default function HtmlToPdfPanel({
 
   const handleConvert = async () => {
     if (!files || files.length === 0) {
-      setResult({ success: false, error: "Please select HTML file(s)" });
+      setResult({ success: false, error: "Please select Excel file(s)" });
       return;
     }
 
@@ -21,10 +21,13 @@ export default function HtmlToPdfPanel({
       const response = await convertFile(files, "pdf");
 
       setResultBlob(response.data);
+
       setResult({
         success: true,
         fileName:
-          files.length > 1 ? "converted-files.zip" : "converted.pdf"
+          files.length > 1
+            ? "converted-files.zip"
+            : "converted.pdf"
       });
 
     } catch (error) {
@@ -37,14 +40,14 @@ export default function HtmlToPdfPanel({
   return (
     <>
       <h3 className="font-semibold text-gray-900 mb-4">
-        HTML to PDF
+        Excel to PDF
       </h3>
 
       {files && files.length > 0 ? (
         <>
-          <div className="mb-4 bg-blue-50 p-4 rounded">
-            <p className="text-sm text-blue-800">
-              Convert HTML documents to PDF format for easy sharing and printing.
+          <div className="mb-4 bg-green-50 p-4 rounded">
+            <p className="text-sm text-green-800">
+              Convert Microsoft Excel (.xls, .xlsx) files to PDF format.
             </p>
             <p className="text-sm mt-2">
               {files.length} file(s) selected
@@ -54,14 +57,14 @@ export default function HtmlToPdfPanel({
           <button
             onClick={handleConvert}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50"
+            className="w-full bg-green-600 text-white py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50"
           >
             {loading ? "Converting..." : "Convert to PDF"}
           </button>
         </>
       ) : (
-        <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
-          <p>Upload HTML file(s) above to convert to PDF</p>
+        <div className="bg-green-50 p-4 rounded text-center text-green-800">
+          <p>Upload Excel file(s) above to convert to PDF</p>
         </div>
       )}
     </>

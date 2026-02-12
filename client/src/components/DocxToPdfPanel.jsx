@@ -1,18 +1,32 @@
 import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
-export default function DocxToPdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function DocxToPdfPanel({
+  files,
+  loading,
+  setLoading,
+  setResult,
+  setResultBlob
+}) {
+
   const handleConvert = async () => {
-    if (!pdfFile) {
-      setResult({ success: false, error: "Please select a DOCX file" });
+    if (!files || files.length === 0) {
+      setResult({ success: false, error: "Please select DOCX file(s)" });
       return;
     }
 
     setLoading(true);
+
     try {
-      const response = await convertFile(pdfFile, "pdf");
+      const response = await convertFile(files, "pdf");
+
       setResultBlob(response.data);
-      setResult({ success: true, fileName: "converted.pdf" });
+      setResult({
+        success: true,
+        fileName:
+          files.length > 1 ? "converted-files.zip" : "converted.pdf"
+      });
+
     } catch (error) {
       setResult({ success: false, error: getErrorMessage(error) });
     } finally {
@@ -22,13 +36,18 @@ export default function DocxToPdfPanel({ pdfFile, loading, setLoading, setResult
 
   return (
     <>
-      <h3 className="font-semibold text-gray-900 mb-4">DOCX to PDF</h3>
-      
-      {pdfFile && (
+      <h3 className="font-semibold text-gray-900 mb-4">
+        DOCX to PDF
+      </h3>
+
+      {files && files.length > 0 ? (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
               Convert Microsoft Word DOCX documents to PDF format.
+            </p>
+            <p className="text-sm mt-2">
+              {files.length} file(s) selected
             </p>
           </div>
 
@@ -40,11 +59,9 @@ export default function DocxToPdfPanel({ pdfFile, loading, setLoading, setResult
             {loading ? "Converting..." : "Convert to PDF"}
           </button>
         </>
-      )}
-
-      {!pdfFile && (
+      ) : (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
-          <p>Upload a DOCX file above to convert to PDF</p>
+          <p>Upload DOCX file(s) above to convert to PDF</p>
         </div>
       )}
     </>

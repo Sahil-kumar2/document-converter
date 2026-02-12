@@ -8,3 +8,4 @@ const router = express.Router();
 router.post('/merge', uploadMultiplePdfs, mergePdfController.mergePdfs);
 
 export default router;
+

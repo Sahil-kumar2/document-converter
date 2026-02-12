@@ -8,3 +8,4 @@ const router = express.Router();
 router.post('/compress', uploadSinglePdf, normalizePdfFile, compressPdfController.compressPdf);
 
 export default router;
+

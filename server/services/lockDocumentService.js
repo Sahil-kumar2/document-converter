@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ✅ HARD CODED – REAL PYTHON (NOT WindowsApps)
-const PYTHON =  "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
+const PYTHON =  "C:\\Users\\user\\AppData\\Local\\Python\\bin\\python.exe";
 
 // safety check (optional but helpful)
 if (!fs.existsSync(PYTHON)) {

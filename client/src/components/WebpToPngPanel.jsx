@@ -1,18 +1,34 @@
 import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
-export default function WebpToPngPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function WebpToPngPanel({
+  files,
+  loading,
+  setLoading,
+  setResult,
+  setResultBlob
+}) {
+
   const handleConvert = async () => {
-    if (!pdfFile) {
-      setResult({ success: false, error: "Please select a WebP file" });
+    if (!files || files.length === 0) {
+      setResult({ success: false, error: "Please select WebP file(s)" });
       return;
     }
 
     setLoading(true);
+
     try {
-      const response = await convertFile(pdfFile, "png");
+      const response = await convertFile(files, "png");
+
       setResultBlob(response.data);
-      setResult({ success: true, fileName: "converted.png" });
+      setResult({
+        success: true,
+        fileName:
+          files.length > 1
+            ? "converted-files.zip"
+            : "converted.png"
+      });
+
     } catch (error) {
       setResult({ success: false, error: getErrorMessage(error) });
     } finally {
@@ -22,13 +38,18 @@ export default function WebpToPngPanel({ pdfFile, loading, setLoading, setResult
 
   return (
     <>
-      <h3 className="font-semibold text-gray-900 mb-4">WebP to PNG</h3>
-      
-      {pdfFile && (
+      <h3 className="font-semibold text-gray-900 mb-4">
+        WebP to PNG
+      </h3>
+
+      {files && files.length > 0 ? (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
-              Convert WebP images to PNG format with transparency support.
+              Convert WebP images to PNG format.
+            </p>
+            <p className="text-sm mt-2">
+              {files.length} file(s) selected
             </p>
           </div>
 
@@ -40,11 +61,9 @@ export default function WebpToPngPanel({ pdfFile, loading, setLoading, setResult
             {loading ? "Converting..." : "Convert to PNG"}
           </button>
         </>
-      )}
-
-      {!pdfFile && (
+      ) : (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
-          <p>Upload a WebP file above to convert to PNG</p>
+          <p>Upload WebP file(s) above to convert to PNG</p>
         </div>
       )}
     </>
