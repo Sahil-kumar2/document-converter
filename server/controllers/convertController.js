@@ -6,6 +6,8 @@ import { deleteFile } from "../middleware/multerconfig.js";
 
 export const convertFile = async (req, res, next) => {
   try {
+     
+     console.log("data yaha hai", req.body, req.files)
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
     }
@@ -35,10 +37,13 @@ export const convertFile = async (req, res, next) => {
     };
 
     const convertedFiles = [];
-
+   
+     
     for (const file of req.files) {
       const inputPath = path.resolve(file.path);
+    
       const ext = path.extname(file.originalname).toLowerCase();
+
 
       if (!conversionRules[ext] || !conversionRules[ext].includes(format)) {
         await deleteFile(inputPath);
@@ -46,8 +51,10 @@ export const convertFile = async (req, res, next) => {
           error: `Conversion from ${ext} to ${format} is not supported`
         });
       }
-
+     
+      console.log("🚀 Starting conversion...");
       const outputFile = await runConversion(inputPath, outputDir, format);
+      console.log("✅ Conversion done:", outputFile);
       convertedFiles.push(outputFile);
 
       await deleteFile(inputPath);

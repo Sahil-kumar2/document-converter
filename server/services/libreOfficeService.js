@@ -21,6 +21,7 @@ const __dirname = path.dirname(__filename);
 const PYTHON_SCRIPTS_DIR = path.join(__dirname, "../../python");
 
 export const runConversion = (inputPath, outputDir, format) => {
+  console.log(`console data hai ${inputPath}, ${format}`)
   return new Promise((resolve, reject) => {
     const safeFormat = format.trim().toLowerCase();
     const inputExt = path.extname(inputPath).toLowerCase();
@@ -264,7 +265,6 @@ export const runConversion = (inputPath, outputDir, format) => {
 
       return;
     }
-
 
     // ===============================
     // ✅ LibreOffice (UPDATED TO execFile)

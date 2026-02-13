@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
 
 const allowedExtensions = [
   ".pdf",
-  ".docx", ".xlsx", ".pptx",
+  ".docx", ".xlsx", ".pptx", ".ppt",
   ".jpg", ".jpeg", ".png", ".webp",
   ".html"
 ];
