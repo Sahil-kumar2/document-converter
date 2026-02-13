@@ -2,7 +2,7 @@ import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
 export default function XlsxToPdfPanel({
-  files,
+  file,
   loading,
   setLoading,
   setResult,
@@ -10,7 +10,7 @@ export default function XlsxToPdfPanel({
 }) {
 
   const handleConvert = async () => {
-    if (!files || files.length === 0) {
+    if (!file || file.length === 0) {
       setResult({ success: false, error: "Please select Excel file(s)" });
       return;
     }
@@ -18,14 +18,14 @@ export default function XlsxToPdfPanel({
     setLoading(true);
 
     try {
-      const response = await convertFile(files, "pdf");
+      const response = await convertFile(file, "pdf");
 
       setResultBlob(response.data);
 
       setResult({
         success: true,
         fileName:
-          files.length > 1
+          file.length > 1
             ? "converted-files.zip"
             : "converted.pdf"
       });
@@ -43,14 +43,14 @@ export default function XlsxToPdfPanel({
         Excel to PDF
       </h3>
 
-      {files && files.length > 0 ? (
+      {file && file.length > 0 ? (
         <>
           <div className="mb-4 bg-green-50 p-4 rounded">
             <p className="text-sm text-green-800">
-              Convert Microsoft Excel (.xls, .xlsx) files to PDF format.
+              Convert Microsoft Excel (.xls, .xlsx) file to PDF format.
             </p>
             <p className="text-sm mt-2">
-              {files.length} file(s) selected
+              {file.length} file(s) selected
             </p>
           </div>
 

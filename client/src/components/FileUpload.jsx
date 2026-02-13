@@ -1,14 +1,6 @@
 import React, { useRef } from "react";
 
-/**
- * Reusable FileUpload Component
- * Displays a drag-and-drop file upload area with file preview
- * 
- * Props:
- * - onFileSelect: callback when file is selected
- * - acceptedTypes: file types to accept (e.g., "image/*" or ".pdf,.docx")
- * - multiple: allow multiple file selection
- */
+
 export default function FileUpload({
   onFileSelect,
   acceptedTypes = "*",

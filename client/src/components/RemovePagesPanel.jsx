@@ -7,7 +7,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 const THUMBNAIL_SCALE = 0.8;
 
-export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function RemovePagesPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState(new Set());
   const [removePagesRange, setRemovePagesRange] = useState("");
@@ -16,7 +16,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
 
   // Load PDF and render thumbnails
   useEffect(() => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setTotalPages(0);
       setThumbnails({});
       setSelectedPages(new Set());
@@ -28,7 +28,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
 
     const loadPdf = async () => {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await file[0].arrayBuffer();
         if (isCancelled) return;
 
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -88,7 +88,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
       });
       renderTasksRef.current = {};
     };
-  }, [pdfFile, setResult]);
+  }, [file[0], setResult]);
 
   // Parse page ranges into a Set of page numbers
   const parsePageRanges = (rangeStr) => {
@@ -172,7 +172,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
 
   // Handle remove pages
   const handleRemovePages = async () => {
-    if (!pdfFile || selectedPages.size === 0) {
+    if (!file[0] || selectedPages.size === 0) {
       setResult({ success: false, error: "Please select pages to remove" });
       return;
     }
@@ -185,7 +185,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
 
     setLoading(true);
     try {
-      const response = await removePages(pdfFile, rangeStr);
+      const response = await removePages(file[0], rangeStr);
       setResultBlob(response.data);
       setResult({ success: true, fileName: "pages-removed.pdf" });
     } catch (error) {
@@ -197,7 +197,7 @@ export default function RemovePagesPanel({ pdfFile, loading, setLoading, setResu
 
   return (
     <div className="space-y-6">
-      {pdfFile ? (
+      {file[0] ? (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Thumbnails Grid */}
           <div className="lg:col-span-3 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">

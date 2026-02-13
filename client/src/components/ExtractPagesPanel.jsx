@@ -6,7 +6,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 const THUMBNAIL_SCALE = 0.8;
 
-export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function ExtractPagesPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState(new Set());
   const [thumbnails, setThumbnails] = useState({});
@@ -14,7 +14,7 @@ export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setRes
   const renderTasksRef = useRef({});
 
   useEffect(() => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setTotalPages(0);
       setThumbnails({});
       setSelectedPages(new Set());
@@ -25,7 +25,7 @@ export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setRes
 
     const loadPdf = async () => {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await file[0].arrayBuffer();
         if (isCancelled) return;
 
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -84,7 +84,7 @@ export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setRes
       });
       renderTasksRef.current = {};
     };
-  }, [pdfFile, setResult]);
+  }, [file[0], setResult]);
 
   useEffect(() => {
     if (totalPages === 0) return;
@@ -135,7 +135,7 @@ export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setRes
   };
 
   const handleExtract = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please upload a PDF file" });
       return;
     }
@@ -148,7 +148,7 @@ export default function ExtractPagesPanel({ pdfFile, loading, setLoading, setRes
 
     setLoading(true);
     try {
-      const response = await extractPdf(pdfFile, rangeStr);
+      const response = await extractPdf(file[0], rangeStr);
       setResultBlob(response.data);
       setResult({ success: true, fileName: "extracted.pdf" });
     } catch (error) {

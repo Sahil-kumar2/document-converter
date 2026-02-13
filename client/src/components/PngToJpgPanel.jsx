@@ -2,7 +2,7 @@ import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
 export default function PngToJpgPanel({
-  files,
+  file,
   loading,
   setLoading,
   setResult,
@@ -10,7 +10,7 @@ export default function PngToJpgPanel({
 }) {
 
   const handleConvert = async () => {
-    if (!files || files.length === 0) {
+    if (!file || file.length === 0) {
       setResult({ success: false, error: "Please select PNG file(s)" });
       return;
     }
@@ -18,13 +18,13 @@ export default function PngToJpgPanel({
     setLoading(true);
 
     try {
-      const response = await convertFile(files, "jpg");
+      const response = await convertFile(file, "jpg");
 
       setResultBlob(response.data);
       setResult({
         success: true,
         fileName:
-          files.length > 1
+          file.length > 1
             ? "converted-files.zip"
             : "converted.jpg"
       });
@@ -42,14 +42,14 @@ export default function PngToJpgPanel({
         PNG to JPG
       </h3>
 
-      {files && files.length > 0 ? (
+      {file && file.length > 0 ? (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
               Convert PNG images to JPG/JPEG format.
             </p>
             <p className="text-sm mt-2">
-              {files.length} file(s) selected
+              {file.length} file(s) selected
             </p>
           </div>
 

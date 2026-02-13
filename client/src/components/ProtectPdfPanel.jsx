@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { lockDocument, getErrorMessage } from "../api";
 
-export default function ProtectPdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function ProtectPdfPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +26,7 @@ export default function ProtectPdfPanel({ pdfFile, loading, setLoading, setResul
 
     setLoading(true);
     try {
-      const response = await lockDocument(pdfFile, password);
+      const response = await lockDocument(file[0],password);
       
       // Backend now returns blob
       setResultBlob(response.data);
@@ -46,7 +46,7 @@ export default function ProtectPdfPanel({ pdfFile, loading, setLoading, setResul
     <>
       <h3 className="font-semibold text-gray-900 mb-4">🔒 Protect PDF</h3>
       
-      {pdfFile && (
+      {file[0] && (
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800 mb-2">
@@ -121,7 +121,7 @@ export default function ProtectPdfPanel({ pdfFile, loading, setLoading, setResul
         </div>
       )}
 
-      {!pdfFile && (
+      {!file[0] && (
         <div className="bg-blue-50 p-4 rounded-lg text-center text-blue-800">
           <p>📄 Upload a PDF file above to protect it with a password</p>
         </div>

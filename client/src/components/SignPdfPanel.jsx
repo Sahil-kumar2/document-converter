@@ -7,7 +7,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 const PREVIEW_SCALE = 1.5;
 
-export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function SignPdfPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   // Signature type and data
   const [signatureType, setSignatureType] = useState("text"); // text | draw | image
   const [signatureText, setSignatureText] = useState("");
@@ -40,11 +40,11 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
 
   // Load and render PDF preview
   useEffect(() => {
-    if (!pdfFile) return;
+    if (!file[0]) return;
 
     const loadPdf = async () => {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await file[0].arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         
         const pages = [];
@@ -61,15 +61,15 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
     };
 
     loadPdf();
-  }, [pdfFile, setResult]);
+  }, [file[0], setResult]);
 
   // Render current PDF page to canvas
   useEffect(() => {
-    if (!pdfFile || !currentPage || !pdfCanvasRef.current) return;
+    if (!file[0] || !currentPage || !pdfCanvasRef.current) return;
 
     const renderPage = async () => {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await file[0].arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         const page = await pdf.getPage(currentPage);
         const viewport = page.getViewport({ scale: PREVIEW_SCALE });
@@ -88,7 +88,7 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
     };
 
     renderPage();
-  }, [pdfFile, currentPage]);
+  }, [file[0], currentPage]);
 
   // Render signature on overlay canvas
   useEffect(() => {
@@ -250,7 +250,7 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
 
   // Sign PDF
   const handleSign = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please upload a PDF" });
       return;
     }
@@ -293,7 +293,7 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
         payload.signatureImage = dataUrl;
       }
 
-      const response = await signPdf(pdfFile, payload);
+      const response = await signPdf(file[0], payload);
       setResultBlob(response.data);
       setResult({ success: true, fileName: "signed.pdf" });
     } catch (error) {
@@ -305,7 +305,7 @@ export default function SignPdfPanel({ pdfFile, loading, setLoading, setResult, 
 
   return (
     <div className="space-y-6">
-      {pdfFile ? (
+      {file[0] ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* PDF Preview */}
           <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">

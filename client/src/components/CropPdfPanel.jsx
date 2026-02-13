@@ -52,7 +52,7 @@ const toRatioBox = (box, canvas) => {
 };
 
 export default function CropPdfPanel({
-  pdfFile,
+  file,
   loading,
   setLoading,
   setResult,
@@ -71,7 +71,7 @@ export default function CropPdfPanel({
   const dragState = useRef({ type: null, start: null, startBox: null });
 
   useEffect(() => {
-    if (!pdfFile) return;
+    if (!file[0]) return;
 
     let isCancelled = false;
     const renderId = ++renderIdRef.current;
@@ -92,7 +92,7 @@ export default function CropPdfPanel({
       }
 
       try {
-        const buffer = await pdfFile.arrayBuffer();
+        const buffer = await file[0].arrayBuffer();
         if (isCancelled || renderId !== renderIdRef.current) return;
 
         const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
@@ -149,7 +149,7 @@ export default function CropPdfPanel({
         renderTaskRef.current = null;
       }
     };
-  }, [pdfFile, pageNumber]);
+  }, [file[0], pageNumber]);
 
   useEffect(() => {
     const overlayCanvas = overlayCanvasRef.current;
@@ -199,7 +199,7 @@ export default function CropPdfPanel({
   };
 
   const handleMouseDown = (e) => {
-    if (!pdfFile) return;
+    if (!file[0]) return;
     const point = getCanvasPoint(e);
     if (!point) return;
 
@@ -304,7 +304,7 @@ export default function CropPdfPanel({
   };
 
   const handleCrop = async () => {
-    if (!pdfFile || !cropBox || !pageSize) {
+    if (!file[0] || !cropBox || !pageSize) {
       setResult({
         success: false,
         error: "Please draw a crop area on the PDF",
@@ -320,7 +320,7 @@ export default function CropPdfPanel({
 
     setLoading(true);
     try {
-      const response = await cropPdf(pdfFile, pdfX, pdfY, pdfWidth, pdfHeight, cropMode, cropMode === "current_page" ? pageNumber : null);
+      const response = await cropPdf(file[0], pdfX, pdfY, pdfWidth, pdfHeight, cropMode, cropMode === "current_page" ? pageNumber : null);
       setResultBlob(response.data);
       setResult({
         success: true,
@@ -344,7 +344,7 @@ export default function CropPdfPanel({
         Click and drag to select the area you want to keep. Resize if needed.
       </p>
 
-      {pdfFile && (
+      {file[0] && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <div
@@ -435,7 +435,7 @@ export default function CropPdfPanel({
         </div>
       )}
 
-      {!pdfFile && (
+      {!file[0] && (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
           <p>Upload a PDF file above to start cropping</p>
         </div>

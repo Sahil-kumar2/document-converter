@@ -5,7 +5,7 @@ import { splitPdf, getErrorMessage } from "../api";
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function SplitPdfPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const [mode, setMode] = useState("pages"); // "pages" | "custom" | "fixed"
   const [customRanges, setCustomRanges] = useState([{ from: 1, to: 1 }]);
   const [fixedRangeSize, setFixedRangeSize] = useState(2);
@@ -14,7 +14,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
 
   // Get total page count from PDF
   useEffect(() => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setTotalPages(0);
       return;
     }
@@ -23,7 +23,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
 
     const loadPdf = async () => {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await file[0].arrayBuffer();
         if (isCancelled) return;
 
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -41,7 +41,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
     return () => {
       isCancelled = true;
     };
-  }, [pdfFile]);
+  }, [file[0]]);
 
   // Add new custom range
   const addRange = () => {
@@ -78,7 +78,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
   };
 
   const handleSplit = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please select a PDF file" });
       return;
     }
@@ -113,7 +113,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
         ranges = generateFixedRanges();
       }
 
-      const response = await splitPdf(pdfFile, mode, ranges, mergeAll);
+      const response = await splitPdf(file[0], mode, ranges, mergeAll);
       setResultBlob(response.data);
       
       const fileName = mergeAll ? "split-merged.pdf" : "split-pages.zip";
@@ -131,7 +131,7 @@ export default function SplitPdfPanel({ pdfFile, loading, setLoading, setResult,
     <div className="space-y-4">
       <h3 className="font-semibold text-gray-900 text-lg">Split PDF</h3>
       
-      {pdfFile ? (
+      {file[0] ? (
         <>
           {/* Total Pages Info */}
           {totalPages > 0 && (

@@ -26,14 +26,14 @@ const apiClient = axios.create({
  * @param {string} targetFormat - Target format (e.g., 'docx', 'pdf', 'png')
  * @returns {Promise<Blob>} - Converted file as blob
  */
-export const convertFile = async (files, targetFormat) => {
+export const convertFile = async (file, targetFormat) => {
   const formData = new FormData();
 
   // Ensure files is always treated as an array
-  const fileArray = Array.isArray(files) ? files : [files];
+  const fileArray = Array.isArray(file) ? file : [file];
 
-  fileArray.forEach((file) => {
-    formData.append("files", file);   // IMPORTANT: must match backend
+  fileArray.forEach((f) => {
+    formData.append("files", f);   // IMPORTANT: must match backend
   });
 
   formData.append("targetFormat", targetFormat);
@@ -511,13 +511,14 @@ export const organizePdf = async (pdfFile, payload = {}) => {
 
 /**
  * Protect PDF with password
- * @param {File} pdfFile - PDF file to protect
+ * @param {File} file - PDF file to protect
  * @param {string} password - Password to encrypt the PDF
  * @returns {Promise<Blob>} - Protected PDF file
  */
-export const lockDocument = async (pdfFile, password) => {
+export const lockDocument = async (file, password) => {
+  console.log(`post data: ${file} ${password}`);
   const formData = new FormData();
-  formData.append("file", pdfFile);
+  formData.append("file", file);
   formData.append("password", password);
 
   return apiClient.post("/api/lockDocument", formData, {

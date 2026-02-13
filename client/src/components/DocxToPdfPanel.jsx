@@ -2,7 +2,7 @@ import React from "react";
 import { convertFile, getErrorMessage } from "../api";
 
 export default function DocxToPdfPanel({
-  files,
+  file,
   loading,
   setLoading,
   setResult,
@@ -10,7 +10,7 @@ export default function DocxToPdfPanel({
 }) {
 
   const handleConvert = async () => {
-    if (!files || files.length === 0) {
+    if (!file || file.length === 0) {
       setResult({ success: false, error: "Please select DOCX file(s)" });
       return;
     }
@@ -18,13 +18,13 @@ export default function DocxToPdfPanel({
     setLoading(true);
 
     try {
-      const response = await convertFile(files, "pdf");
+      const response = await convertFile(file, "pdf");
 
       setResultBlob(response.data);
       setResult({
         success: true,
         fileName:
-          files.length > 1 ? "converted-files.zip" : "converted.pdf"
+          file.length > 1 ? "converted-files.zip" : "converted.pdf"
       });
 
     } catch (error) {
@@ -40,14 +40,14 @@ export default function DocxToPdfPanel({
         DOCX to PDF
       </h3>
 
-      {files && files.length > 0 ? (
+      {file && file.length > 0 ? (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
               Convert Microsoft Word DOCX documents to PDF format.
             </p>
             <p className="text-sm mt-2">
-              {files.length} file(s) selected
+              {file.length} file(s) selected
             </p>
           </div>
 

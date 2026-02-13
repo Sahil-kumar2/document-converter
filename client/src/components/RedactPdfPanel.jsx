@@ -8,7 +8,7 @@ const PREVIEW_SCALE = 1.25;
 const THUMB_SCALE = 0.18;
 
 export default function RedactPdfPanel({
-  pdfFile,
+  file,
   loading,
   setLoading,
   setResult,
@@ -33,7 +33,7 @@ export default function RedactPdfPanel({
   const canvasRefs = useRef([]);
 
   useEffect(() => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setPdfDoc(null);
       setPageCount(0);
       setThumbnails({});
@@ -46,7 +46,7 @@ export default function RedactPdfPanel({
     let cancelled = false;
 
     const loadPdf = async () => {
-      const buffer = await pdfFile.arrayBuffer();
+      const buffer = await file[0].arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
       if (cancelled) return;
       setPdfDoc(doc);
@@ -61,7 +61,7 @@ export default function RedactPdfPanel({
     return () => {
       cancelled = true;
     };
-  }, [pdfFile]);
+  }, [file[0]]);
 
   useEffect(() => {
     if (!pdfDoc || pageCount === 0) return;
@@ -277,7 +277,7 @@ export default function RedactPdfPanel({
   }, [areaRedactions, textMatches]);
 
   const handleApply = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please select a PDF file" });
       return;
     }
@@ -289,7 +289,7 @@ export default function RedactPdfPanel({
 
     setLoading(true);
     try {
-      const response = await redactPdf(pdfFile, combinedRedactions);
+      const response = await redactPdf(file[0], combinedRedactions);
       setResultBlob(response.data);
       setResult({ success: true, fileName: "redacted.pdf" });
     } catch (error) {
@@ -309,13 +309,13 @@ export default function RedactPdfPanel({
     <div className="space-y-4">
       <h3 className="font-semibold text-gray-900 text-lg">Redact PDF</h3>
 
-      {!pdfFile && (
+      {!file[0] && (
         <div className="bg-blue-50 p-6 rounded text-center text-blue-800">
           <p>Upload a PDF file above to start redacting</p>
         </div>
       )}
 
-      {pdfFile && (
+      {file[0] && (
         <div className="grid grid-cols-12 gap-4">
           {/* Left Thumbnails */}
           <div className="col-span-12 lg:col-span-2">

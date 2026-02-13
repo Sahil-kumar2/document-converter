@@ -28,6 +28,7 @@ export default function ToolPageLayout({
       : [selectedFiles]
 
     setFiles(fileArray)
+    console.log(fileArray);
     setResult(null)
     setResultBlob(null)
   }
@@ -116,7 +117,7 @@ export default function ToolPageLayout({
 
             {ToolComponent && (
               <ToolComponent
-                files={files}
+                file={files}
                 loading={loading}
                 setLoading={setLoading}
                 setResult={setResult}

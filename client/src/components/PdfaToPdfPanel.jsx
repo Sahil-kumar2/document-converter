@@ -1,16 +1,16 @@
 import React from "react";
 import { convertToPdfa, getErrorMessage } from "../api";
 
-export default function PdfaToPdfPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function PdfaToPdfPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const handlePdfA = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please select a PDF file" });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await convertToPdfa(pdfFile);
+      const response = await convertToPdfa(file[0]);
       setResultBlob(response.data);
       setResult({ success: true, fileName: "pdfa.pdf" });
     } catch (error) {
@@ -24,7 +24,7 @@ export default function PdfaToPdfPanel({ pdfFile, loading, setLoading, setResult
     <>
       <h3 className="font-semibold text-gray-900 mb-4">PDF to PDF/A</h3>
       
-      {pdfFile && (
+      {file[0] && (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
@@ -43,7 +43,7 @@ export default function PdfaToPdfPanel({ pdfFile, loading, setLoading, setResult
         </>
       )}
 
-      {!pdfFile && (
+      {!file[0] && (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
           <p>Upload a PDF file above to convert to PDF/A</p>
         </div>

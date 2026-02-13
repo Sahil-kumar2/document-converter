@@ -8,7 +8,7 @@ const PREVIEW_SCALE = 1.25;
 const THUMB_SCALE = 0.18;
 
 export default function AddPageNumbersPanel({
-  pdfFile,
+  file,
   loading,
   setLoading,
   setResult,
@@ -41,7 +41,8 @@ export default function AddPageNumbersPanel({
 
   // Load PDF
   useEffect(() => {
-    if (!pdfFile) {
+    console.log(`data yaha hai : ${file}`);
+    if (!file) {
       setPdfDoc(null);
       setPageCount(0);
       setThumbnails({});
@@ -53,7 +54,7 @@ export default function AddPageNumbersPanel({
     let cancelled = false;
 
     const loadPdf = async () => {
-      const buffer = await pdfFile.arrayBuffer();
+      const buffer = await file[0].arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
       if (cancelled) return;
       setPdfDoc(doc);
@@ -67,7 +68,7 @@ export default function AddPageNumbersPanel({
     return () => {
       cancelled = true;
     };
-  }, [pdfFile]);
+  }, [file[0]]);
 
   // Render thumbnails
   useEffect(() => {
@@ -232,7 +233,7 @@ export default function AddPageNumbersPanel({
   };
 
   const handleAddPageNumbers = async () => {
-    if (!pdfFile || !pdfDoc) {
+    if (!file[0] || !pdfDoc) {
       setResult({
         success: false,
         error: "Please upload a PDF first",
@@ -258,7 +259,7 @@ export default function AddPageNumbersPanel({
         pageNumberText = customText;
       }
 
-      const response = await addPageNumbers(pdfFile, {
+      const response = await addPageNumbers(file[0], {
         position,
         margin,
         startPage: startNum,
@@ -276,7 +277,7 @@ export default function AddPageNumbersPanel({
       setResultBlob(response.data);
       setResult({
         success: true,
-        fileName: `numbered-${pdfFile.name}`,
+        fileName: `numbered-${file[0].name}`,
       });
     } catch (err) {
       setResult({
@@ -559,9 +560,9 @@ export default function AddPageNumbersPanel({
         {/* Action Button */}
         <button
           onClick={handleAddPageNumbers}
-          disabled={!pdfFile || loading}
+          disabled={!file[0] || loading}
           className={`w-full py-3 rounded-lg font-bold text-white transition ${
-            pdfFile && !loading
+            file[0] && !loading
               ? "bg-red-500 hover:bg-red-600"
               : "bg-gray-400 cursor-not-allowed"
           }`}
@@ -572,3 +573,6 @@ export default function AddPageNumbersPanel({
     </div>
   );
 }
+
+
+
