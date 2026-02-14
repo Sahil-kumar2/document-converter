@@ -116,6 +116,7 @@ export default function ToolPageLayout({
 
             {ToolComponent && (
               <ToolComponent
+                pdfFile={files[0]}
                 files={files}
                 loading={loading}
                 setLoading={setLoading}

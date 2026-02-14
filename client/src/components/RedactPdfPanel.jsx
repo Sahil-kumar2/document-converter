@@ -204,8 +204,9 @@ export default function RedactPdfPanel({
         charOffset += str.length;
         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
         const x = tx[4];
-        const y = tx[5];
         const height = Math.hypot(tx[2], tx[3]);
+        // Move from baseline to top of text
+        const y = tx[5] - height;
         const width = item.width * viewport.scale;
         mapped.push({ start, end: charOffset, x, y, width, height });
       });
@@ -326,11 +327,10 @@ export default function RedactPdfPanel({
                   <button
                     key={pageIndex}
                     onClick={() => scrollToPage(pageIndex)}
-                    className={`w-full border rounded p-1 text-left ${
-                      activePage === pageIndex
+                    className={`w-full border rounded p-1 text-left ${activePage === pageIndex
                         ? "border-blue-600 ring-2 ring-blue-200"
                         : "border-gray-200"
-                    }`}
+                      }`}
                   >
                     {thumbnails[pageIndex] ? (
                       <img
@@ -403,11 +403,10 @@ export default function RedactPdfPanel({
                           type="button"
                           key={m.id}
                           onClick={() => toggleMatch(m.id)}
-                          className={`absolute border transition-colors ${
-                            m.enabled
+                          className={`absolute border transition-colors ${m.enabled
                               ? "bg-red-600/30 border-red-600"
                               : "bg-gray-500/20 border-gray-400"
-                          }`}
+                            }`}
                           style={{
                             left: `${m.xRatio * 100}%`,
                             top: `${m.yRatio * 100}%`,

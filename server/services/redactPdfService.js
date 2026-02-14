@@ -119,7 +119,7 @@ async function redactPdf(inputPath, optionsOrAreas) {
       console.error(`[Redact] Flattening failed: ${flattenErr.message}`);
       throw flattenErr;
     } finally {
-      try { fs.unlinkSync(preFlattenPath); } catch (_) {}
+      try { fs.unlinkSync(preFlattenPath); } catch (_) { }
     }
   } else {
     console.warn(`[Redact] No redactions were drawn! Output will be identical to input.`);
@@ -129,7 +129,7 @@ async function redactPdf(inputPath, optionsOrAreas) {
     const result = await pdfaPdfService.convertToPdfa(finalPath, {
       pdfaLevel: pdfaLevel || 'PDF/A-1b',
     });
-    try { fs.unlinkSync(finalPath); } catch (_) {}
+    try { fs.unlinkSync(finalPath); } catch (_) { }
     finalPath = result.path;
   }
 
@@ -157,10 +157,10 @@ function normalizeRedactions({ redactAreas, pages, totalPages, pageIndices }) {
 
     const pageIndex =
       Number.isInteger(raw.pageIndex) ? raw.pageIndex :
-      Number.isInteger(raw.page) ? raw.page :
-      Number.isInteger(raw.pageNumber) ? raw.pageNumber - 1 :
-      Number.isInteger(raw.pageNum) ? raw.pageNum - 1 :
-      null;
+        Number.isInteger(raw.page) ? raw.page :
+          Number.isInteger(raw.pageNumber) ? raw.pageNumber - 1 :
+            Number.isInteger(raw.pageNum) ? raw.pageNum - 1 :
+              null;
 
     if (pageIndex === null || pageIndex < 0 || pageIndex >= totalPages) return;
     if (pageIndices && !pageIndices.includes(pageIndex)) return;
@@ -197,6 +197,8 @@ function normalizeRedactions({ redactAreas, pages, totalPages, pageIndices }) {
       y = raw.y;
       w = raw.width;
       h = raw.height;
+
+      y = height - raw.y - h;
     } else {
       return;
     }
