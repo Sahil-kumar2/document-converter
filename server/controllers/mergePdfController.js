@@ -1,49 +1,61 @@
-import * as mergePdfService from '../services/mergePdfService.js';
-import { removeFiles } from '../utils/cleanup.js';
-import path from 'path';
+import * as mergePdfService from "../services/mergePdfService.js";
+import { removeFiles } from "../utils/cleanup.js";
+import fs from "fs";
+import path from "path";
 
-/**
- * POST /api/pdf/merge
- * Body: Multiple PDF files (field name: pdfFiles)
- */
 export async function mergePdfs(req, res, next) {
-  const uploadedFiles = req.files;
+  try {
+    const uploadedFiles = req.files;
 
-  if (!uploadedFiles || uploadedFiles.length < 2) {
-    return res.status(400).json({
-      success: false,
-      error: 'At least 2 PDF files are required for merging (field name: pdfFiles)',
-    });
-  }
-
-  const uploadedPaths = uploadedFiles.map(f => path.resolve(f.path));
-
-  // ✅ Validate mimetype 
-  for (const file of uploadedFiles) {
-    if (file.mimetype !== 'application/pdf') {
-      removeFiles(uploadedPaths);
+    if (!uploadedFiles || uploadedFiles.length < 2) {
       return res.status(400).json({
         success: false,
-        error: 'Only PDF files are allowed',
+        error: "At least 2 PDF files are required (field name: pdfFiles)",
       });
     }
-  }
 
-  try {
+    const uploadedPaths = uploadedFiles.map((file) =>
+      path.resolve(file.path)
+    );
+
+    // Validate extension
+    for (const file of uploadedFiles) {
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (ext !== ".pdf") {
+        await removeFiles(uploadedPaths);
+        return res.status(400).json({
+          success: false,
+          error: "Only PDF files are allowed",
+        });
+      }
+    }
+
+    console.log("📂 Merging files:", uploadedPaths);
+
     const mergedPath = await mergePdfService.mergePdfs(uploadedPaths);
+
+    if (!mergedPath || !fs.existsSync(mergedPath)) {
+      await removeFiles(uploadedPaths);
+      return res.status(500).json({
+        success: false,
+        error: "Merged file not created",
+      });
+    }
+
     const filename = path.basename(mergedPath);
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    res.sendFile(path.resolve(mergedPath), err => {
-      removeFiles([...uploadedPaths, mergedPath]);
-      if (err && !res.headersSent) {
-        next(err);
+    // Same pattern as convertFile
+    return res.download(mergedPath, filename, async (err) => {
+      if (err) {
+        console.error("❌ Download error:", err);
       }
+
+      // Cleanup AFTER response
+      await removeFiles([...uploadedPaths, mergedPath]);
     });
+
   } catch (error) {
-    removeFiles(uploadedPaths);
+    console.error("❌ Merge error:", error);
     next(error);
   }
 }

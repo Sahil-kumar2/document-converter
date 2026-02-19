@@ -1,34 +1,24 @@
-import { convertToBlackWhite } from "../services/blackAndWhiteServices.js";
-import path from "path";
-import fs from "fs";
+import { convertToBlackWhiteZip } from "../services/blackAndWhiteServices.js";
 
 export async function blackWhiteController(req, res) {
   try {
-    const originalPath = req.file.path;
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
 
-    const processedPath = await convertToBlackWhite(originalPath);
+    // 🔥 Dynamic filename (timestamp based)
+    const zipName = `black-white-${Date.now()}.zip`;
 
-    // Send the file for download
-    res.download(processedPath, "black-white-image.jpg", (err) => {
-      if (err) {
-        console.error("Download error:", err);
-      }
-      
-      // Clean up uploaded and processed files after download
-      setTimeout(() => {
-        try {
-          if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
-          if (fs.existsSync(processedPath)) fs.unlinkSync(processedPath);
-        } catch (cleanupErr) {
-          console.error("Cleanup error:", cleanupErr);
-        }
-      }, 5000);
-    });
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${zipName}"`
+    );
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    await convertToBlackWhiteZip(req.files, res);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 }

@@ -15,7 +15,7 @@ export async function extractTextFromImage(inputPath) {
 
   await sharp(inputPath)
     .grayscale()
-    .negate()  
+    .negate() 
     .toFile(processedPath);
 
   
@@ -23,7 +23,7 @@ export async function extractTextFromImage(inputPath) {
     processedPath,
     'eng',
     {
-      logger: info => console.log(info) // Progress tracking (optional)
+      logger: info => console.log(info), // Progress tracking (optional)
     }
   );
 
@@ -33,7 +33,11 @@ export async function extractTextFromImage(inputPath) {
     "ocr_" + Date.now() + ".txt"
   );
 
-  fs.writeFileSync(txtFilePath, text, 'utf-8');
+  const cleanedText = text;
+
+
+
+  fs.writeFileSync(txtFilePath,cleanedText , 'utf-8');
 
   
   fs.unlinkSync(inputPath);

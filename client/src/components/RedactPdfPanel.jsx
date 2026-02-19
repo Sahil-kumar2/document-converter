@@ -204,8 +204,9 @@ export default function RedactPdfPanel({
         charOffset += str.length;
         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
         const x = tx[4];
-        const y = tx[5];
         const height = Math.hypot(tx[2], tx[3]);
+        // Move from baseline to top of text
+        const y = tx[5] - height;
         const width = item.width * viewport.scale;
         mapped.push({ start, end: charOffset, x, y, width, height });
       });

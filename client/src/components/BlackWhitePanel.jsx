@@ -1,18 +1,18 @@
 import React from "react";
 import { convertToBlackWhite, getErrorMessage } from "../api";
 
-export default function BlackWhitePanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function BlackWhitePanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const handleBlackWhite = async () => {
-    if (!pdfFile) {
+    if (!file) {
       setResult({ success: false, error: "Please select an image file" });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await convertToBlackWhite(pdfFile); // pdfFile is actually imageFile in this context
+      const response = await convertToBlackWhite(file); // file is actually imageFile in this context
       setResultBlob(response.data);
-      setResult({ success: true, fileName: "black-white.jpg" });
+       setResult({ success: true, fileName: "black-white-images.zip" });
     } catch (error) {
       setResult({ success: false, error: getErrorMessage(error) });
     } finally {
@@ -24,7 +24,7 @@ export default function BlackWhitePanel({ pdfFile, loading, setLoading, setResul
     <>
       <h3 className="font-semibold text-gray-900 mb-4">Convert to Black & White</h3>
       
-      {pdfFile && (
+      {file && (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
@@ -43,7 +43,7 @@ export default function BlackWhitePanel({ pdfFile, loading, setLoading, setResul
         </>
       )}
 
-      {!pdfFile && (
+      {!file && (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
           <p>Upload an image file above to convert</p>
         </div>

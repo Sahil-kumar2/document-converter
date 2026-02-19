@@ -6,11 +6,11 @@ import archiver from "archiver";
 import CloudConvert from "cloudconvert";
 import puppeteer from "puppeteer";
 
-const PYTHON_PATH = "C:\\Users\\ASUS\\AppData\\Local\\Programs\\Python\\Python314\\python.exe";
+const PYTHON_PATH = "C:\\Users\\user\\AppData\\Local\\Python\\bin\\python.exe";
 const MAGICK_PATH = "C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe";
 const WKHTMLTOPDF_PATH = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe";
 const PDFTOHTML_PATH = "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe\\poppler-25.07.0\\Library\\bin\\pdftohtml.exe"
-const GHOSTSCRIPT_PATH = "C:\\Users\\ASUS\\gs10060w64.exe";
+const GHOSTSCRIPT_PATH = "C:\\Program Files\\gs\\gs10.06.0\\bin\\gswin64.exe";
 const LIBREOFFICE_PATH = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
 const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY, true);
 
@@ -120,21 +120,40 @@ export const runConversion = (inputPath, outputDir, format) => {
     // ===============================
     // PDF → HTML
     // ===============================
-    if (inputExt === ".pdf" && safeFormat === "html") {
-      const baseName = path.parse(inputPath).name + "-" + Date.now();
-      const outputFile = path.join(outputDir, baseName + ".html");
+//     if (inputExt === ".pdf" && safeFormat === "html") {
+//       const baseName = path.parse(inputPath).name + "-" + Date.now();
+//       const outputFile = path.join(outputDir, baseName + ".html");
 
-      exec(
-        `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`,
-        (err, stdout, stderr) => {
-          console.log(stdout);
-          console.log(stderr);
-          if (err) return reject(err);
-          resolve(outputFile);
-        }
-      );
-      return;
-    }
+//       exec(
+//         `"${PDFTOHTML_PATH}" -s -noframes "${inputPath}" "${outputFile}"`,
+//         (err, stdout, stderr) => {
+//           console.log(stdout);
+//           console.log(stderr);
+//           if (err) return reject(err);
+//           resolve(outputFile);
+//         }
+//       );
+
+// //       const baseName = path.parse(inputPath).name + "-" + Date.now();
+// // const outputBase = path.join(outputDir, baseName);
+
+// //      exec(
+// //   `"${PDFTOHTML_PATH}" -c -hidden -nomerge -zoom 1.5 "${inputPath}" "${outputBase}"`,
+// //   (err, stdout, stderr) => {
+// //     if (err) return reject(err);
+
+// //     const generatedFile = outputBase + ".htm";  // Poppler yeh banayega
+// //     const finalFile = outputBase + ".html";     // Tumhe yeh chahiye
+
+// //     fs.renameSync(generatedFile, finalFile);
+
+// //     resolve(finalFile);
+// //   }
+// // );
+
+//       return;
+//     }
+
 
     // ===============================
     // IMAGE → PDF

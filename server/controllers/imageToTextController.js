@@ -1,32 +1,25 @@
+import { runOCR } from "../services/imageToTextService.js";
 
-import { extractTextFromImage } from "../services/ocr_services.js";
-import fs from "fs";
-
-export async function imageToText(req, res) {
+export const imageToText = async (req, res) => {
   try {
-    const originalPath = req.file.path;
-    const txtFilePath = await extractTextFromImage(originalPath);
-    
-    // Send the text file for download
-    res.download(txtFilePath, "extracted-text.txt", (err) => {
-      if (err) {
-        console.error("Download error:", err);
-      }
-      
-      // Clean up uploaded image and text file after download
-      setTimeout(() => {
-        try {
-          if (fs.existsSync(originalPath)) fs.unlinkSync(originalPath);
-          if (fs.existsSync(txtFilePath)) fs.unlinkSync(txtFilePath);
-        } catch (cleanupErr) {
-          console.error("Cleanup error:", cleanupErr);
-        }
-      }, 5000);
-    });
+    if (!req.file) {
+      return res.status(400).send("No file uploaded");
+    }
+
+    const result = await runOCR(req.file.buffer);
+
+    const text = result.text || "";
+
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=ocr-result.txt"
+    );
+
+    res.send(text);
+
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    console.error("OCR ERROR:", error);
+    res.status(500).send("OCR Failed");
   }
-}
+};

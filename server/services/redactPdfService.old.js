@@ -1,10 +1,18 @@
 import { PDFDocument, rgb } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+
 import { parsePageRanges } from '../utils/pageRangeParser.js';
 import { parseRedactAreas } from '../utils/redactAreasParser.js';
 import { flattenPdf } from '../utils/ghostscript.js';
 import * as pdfaPdfService from './pdfaPdfService.js';
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 /**
  * Find bounding boxes for all occurrences of searchText using pdfjs-dist

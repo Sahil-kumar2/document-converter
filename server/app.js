@@ -14,6 +14,9 @@ import removePagesRoutes from "./routes/removePagesRoutes.js";
 import repairPdfRoutes from "./routes/repairPdfRoutes.js";
 import routesIndex from "./routes/index.js";
 import lockDocRoute from "./routes/lockDocumentRoutes.js";
+import imageToPDFRoute from "./routes/createPDFFRomImagesRoutes.js";
+import pdfToHtmlRoute from "./routes/pdfToHtmlRoutes.js";
+import pdfToTextRoute from "./routes/pdfToTextRoutes.js";
 
 dotenv.config();
 
@@ -31,8 +34,11 @@ app.use(express.json());
 app.use("/api/convert", convertRoutes);
 app.use("/api/black-and-white-image", blackAndWhiteRoutes);
 app.use("/api/imageGeneration", imageGenreationRoute);
-app.use("/api/imageToText", imageToTextRoute);
+app.use("/api/image-to-text", imageToTextRoute);
+app.use("/api/pdf-to-text", pdfToTextRoute);
+app.use("/api/image-to-pdf", imageToPDFRoute);
 app.use("/api/excel", excelMergeRoute);
+app.use("/api/pdf-to-html", pdfToHtmlRoute);
 app.use("/api/pdf", pdfRoutes);
 app.use("/api/pdf", compressPdfRoutes);
 app.use("/api/pdf", mergePdfRoutes);

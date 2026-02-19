@@ -73,14 +73,13 @@ export const convertFile = async (req, res, next) => {
     // MULTIPLE FILES → CREATE ZIP
     // ===============================
     const zipName = `converted-${Date.now()}.zip`;
-    const zipPath = path.join(outputDir, zipName);
-
+    const zipPath = path.join(outputDir, zipName);  
     const output = fs.createWriteStream(zipPath);
     const archive = archiver("zip", { zlib: { level: 9 } });
 
     output.on("close", async () => {
       res.download(zipPath, async () => {
-        await deleteFile(zipPath);
+        await deleteFile(zipPath); 
         for (const file of convertedFiles) {
           await deleteFile(file);
         }

@@ -302,20 +302,27 @@ export const addPageNumbers = async (pdfFile, options = {}) => {
 
 /**
  * Convert image to black and white
- * @param {File} imageFile - Image file
+ * @param {File} file - Image file
  * @returns {Promise<Blob>} - Processed image as blob
  */
-export const convertToBlackWhite = async (imageFile) => {
+export const convertToBlackWhite = async (files) => {
   const formData = new FormData();
-  formData.append("image", imageFile);
 
-  return apiClient.post("/api/black-and-white-image/black-white", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    responseType: "blob",
+  files.forEach((file) => {
+    formData.append("files", file);
   });
+
+  console.log("files hai bhai", files);
+
+  return apiClient.post(
+    "/api/black-and-white-image/black-white",
+    formData,
+    {
+      responseType: "blob",
+    }
+  );
 };
+
 
 /**
  * Extract text from image (OCR)

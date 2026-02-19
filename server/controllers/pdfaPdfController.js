@@ -11,7 +11,7 @@ import path from 'path';
 async function convertToPdfa(req, res, next) {
   const uploadedPath = req.file?.path;
   if (!uploadedPath) {
-    return res.status(400).json({ success: false, error: 'PDF file is required (pdfFile)' });
+    return res.status(400).json({ success: false, error: 'PDF f ile is required (pdfFile)' });
   }
 
   const pdfaLevelRaw = getBodyValue(req.body, 'pdfaLevel') ?? req.body?.pdfaLevel ?? 'PDF/A-1b';

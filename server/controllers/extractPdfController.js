@@ -17,8 +17,8 @@ async function extractPdf(req, res, next) {
   const pageNumbers = getBodyValue(req.body, 'pageNumbers');
   if (!pageNumbers) {
     return res.status(400).json({
-      success: false,
-      error: 'pageNumbers is required (e.g. "2,4,6-8")',
+      success: false, 
+      error: 'pageNumbers is required',
     });
   }
 

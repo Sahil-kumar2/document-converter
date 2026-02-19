@@ -1,22 +1,40 @@
 import sharp from "sharp";
-import path from "path";
-import fs from "fs";
+import archiver from "archiver";
+import fs from "fs/promises";
 
-export async function convertToBlackWhite(inputPath) {
-  const outputDir = "uploads";
-  
-  const outputPath = path.join(
-    outputDir,
-    "bw_" + Date.now() + path.extname(inputPath)
-  );
+export async function convertToBlackWhiteZip(files, res) {
+  const archive = archiver("zip", {
+    zlib: { level: 9 },
+  });
 
-  await sharp(inputPath)
-    .grayscale()
-    .negate()
-    .toFile(outputPath);
+  archive.on("error", (err) => {
+    throw err;
+  });
 
-  // Original/temp image delete kar do
-  fs.unlinkSync(inputPath);
+  archive.pipe(res);
 
-  return outputPath;
+  try {
+    for (const file of files) {
+      const processedBuffer = await sharp(file.path)
+        .grayscale()
+        .toBuffer();
+
+      archive.append(processedBuffer, {
+        name: `bw_${file.originalname}`,
+      });
+    }
+
+    await archive.finalize();
+  } finally {
+    // 🔥 Always cleanup uploaded temp files
+    await Promise.all(
+      files.map(async (file) => {
+        try {
+          await fs.unlink(file.path);
+        } catch (err) {
+          console.error("Unlink error:", err.message);
+        }
+      })
+    );
+  }
 }

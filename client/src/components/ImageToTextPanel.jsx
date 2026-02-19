@@ -1,16 +1,16 @@
 import React from "react";
 import { extractTextFromImage, getErrorMessage } from "../api";
 
-export default function ImageToTextPanel({ pdfFile, loading, setLoading, setResult, setResultBlob }) {
+export default function ImageToTextPanel({ file, loading, setLoading, setResult, setResultBlob }) {
   const handleExtractText = async () => {
-    if (!pdfFile) {
+    if (!file[0]) {
       setResult({ success: false, error: "Please select an image file" });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await extractTextFromImage(pdfFile); // pdfFile is actually imageFile in this context
+      const response = await extractTextFromImage(file[0]); // file[0] is actually imageFile in this context
       setResultBlob(response.data);
       setResult({ success: true, fileName: "extracted-text.txt" });
     } catch (error) {
@@ -24,7 +24,7 @@ export default function ImageToTextPanel({ pdfFile, loading, setLoading, setResu
     <>
       <h3 className="font-semibold text-gray-900 mb-4">Image to Text (OCR)</h3>
       
-      {pdfFile && (
+      {file[0] && (
         <>
           <div className="mb-4 bg-blue-50 p-4 rounded">
             <p className="text-sm text-blue-800">
@@ -43,7 +43,7 @@ export default function ImageToTextPanel({ pdfFile, loading, setLoading, setResu
         </>
       )}
 
-      {!pdfFile && (
+      {!file[0] && (
         <div className="bg-blue-50 p-4 rounded text-center text-blue-800">
           <p>Upload an image file above to extract text</p>
         </div>
