@@ -12,6 +12,9 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+
+
+
 /* ===========================
    FILE DELETE HELPER
 =========================== */
@@ -81,6 +84,15 @@ export const upload = multer({
       : 50 * 1024 * 1024, // default 50MB
   },
 });
+
+/* ===========================
+   Temporary Upload
+=========================== */
+export const uploadTemp = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+});
+
 
 /* ===========================
    COMMON UPLOAD MODES

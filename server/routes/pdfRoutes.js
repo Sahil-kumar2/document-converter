@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadPdfWithWatermark, normalizePdfFile, uploadSinglePdf, uploadSingleFile } from '../middleware/multerconfig.js';
+import { uploadPdfWithWatermark, normalizePdfFile, uploadSinglePdf, uploadSingleFile, uploadMultiplePdfs, uploadTemp } from '../middleware/multerconfig.js';
 import * as splitPdfController from '../controllers/splitPdfController.js';
 import * as cropPdfController from '../controllers/cropPdfController.js';
 import * as extractPdfController from '../controllers/extractPdfController.js';
@@ -8,6 +8,8 @@ import * as watermarkPdfController from '../controllers/watermarkPdfController.j
 import * as redactPdfController from '../controllers/redactPdfController.js';
 import * as pdfaPdfController from '../controllers/pdfaPdfController.js';
 import { unlockPdfController } from '../controllers/unlockPdfController.js';
+import { convertPdfToPpt } from '../controllers/pdfToPPTController.js';
+import { imagesToPdfController } from '../controllers/scanToPDFController.js';
 
 const router = express.Router();
 
@@ -37,5 +39,15 @@ router.post(
   normalizePdfFile,
   unlockPdfController
 );
+
+
+router.post(
+  "/pdf-to-ppt",
+ uploadTemp.array("pdfFiles", 20),
+  convertPdfToPpt
+);
+
+
+router.post("/scan-to-pdf", uploadTemp.array("files", 20), imagesToPdfController);
 
 export default router;

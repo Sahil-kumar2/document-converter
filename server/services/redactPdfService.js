@@ -225,33 +225,45 @@
 
 // export { redactPdf };
 
-import { PDFDocument, rgb } from 'pdf-lib';
-import fs from 'fs';
-import path from 'path';
-import { flattenPdf } from '../utils/ghostscript.js';
-import * as pdfaPdfService from './pdfaPdfService.js';
 
+import { PDFDocument, rgb } from "pdf-lib";
+import fs from "fs";
+import path from "path";
+import { flattenPdf } from "../utils/ghostscript.js";
+import * as pdfaPdfService from "./pdfaPdfService.js";
+
+/**
+ * Redact content from PDF
+ * @param {string} inputPath
+ * @param {object} options
+ */
 async function redactPdf(inputPath, options = {}) {
   const {
     redactAreas = [],
     redactText,
-    convertToPdfa,
+    convertToPdfa = false,
     pdfaLevel,
   } = options;
 
   if (
-    (!redactAreas || redactAreas.length === 0) &&
+    (!Array.isArray(redactAreas) || redactAreas.length === 0) &&
     (!redactText || !redactText.trim())
   ) {
     throw new Error(
-      'At least one of redactText or redactAreas must be provided'
+      "At least one of redactText or redactAreas must be provided"
     );
   }
 
-  const buffer = fs.readFileSync(inputPath);
-  const doc = await PDFDocument.load(buffer);
-  const pages = doc.getPages();
-  const totalPages = doc.getPageCount();
+  /* =========================
+     LOAD FILE
+  ==========================*/
+
+  const fileBuffer = fs.readFileSync(inputPath);
+  const uint8Array = new Uint8Array(fileBuffer);
+
+  const pdfDoc = await PDFDocument.load(fileBuffer);
+  const pages = pdfDoc.getPages();
+  const totalPages = pdfDoc.getPageCount();
 
   const black = rgb(0, 0, 0);
   let drawnCount = 0;
@@ -261,7 +273,7 @@ async function redactPdf(inputPath, options = {}) {
   ==========================*/
 
   if (Array.isArray(redactAreas) && redactAreas.length > 0) {
-    redactAreas.forEach((area) => {
+    for (const area of redactAreas) {
       const pageIndex =
         Number.isInteger(area.pageIndex)
           ? area.pageIndex
@@ -269,7 +281,8 @@ async function redactPdf(inputPath, options = {}) {
           ? area.pageNumber - 1
           : null;
 
-      if (pageIndex === null || pageIndex >= totalPages) return;
+      if (pageIndex === null || pageIndex < 0 || pageIndex >= totalPages)
+        continue;
 
       const page = pages[pageIndex];
       const { width, height } = page.getSize();
@@ -279,11 +292,12 @@ async function redactPdf(inputPath, options = {}) {
       let w = area.width;
       let h = area.height;
 
+      // Ratio support
       if (
-        typeof area.xRatio === 'number' &&
-        typeof area.yRatio === 'number' &&
-        typeof area.widthRatio === 'number' &&
-        typeof area.heightRatio === 'number'
+        typeof area.xRatio === "number" &&
+        typeof area.yRatio === "number" &&
+        typeof area.widthRatio === "number" &&
+        typeof area.heightRatio === "number"
       ) {
         x = area.xRatio * width;
         w = area.widthRatio * width;
@@ -291,79 +305,121 @@ async function redactPdf(inputPath, options = {}) {
         y = height - area.yRatio * height - h;
       }
 
-      if (w > 0 && h > 0) {
-        page.drawRectangle({ x, y, width: w, height: h, color: black });
+      if (
+        typeof x === "number" &&
+        typeof y === "number" &&
+        typeof w === "number" &&
+        typeof h === "number" &&
+        w > 0 &&
+        h > 0
+      ) {
+        page.drawRectangle({
+          x,
+          y,
+          width: w,
+          height: h,
+          color: black,
+        });
+
         drawnCount++;
       }
-    });
+    }
   }
 
   /* =========================
-     TEXT BASED REDACTION (Modern Way)
+     PRECISE WORD REDACTION
   ==========================*/
 
   if (redactText && redactText.trim()) {
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
+    const search = redactText.trim().toLowerCase();
 
-    const loadingTask = pdfjsLib.getDocument({ data: buffer });
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
     const pdf = await loadingTask.promise;
 
-    const search = redactText.trim().toLowerCase();
-    let found = false;
-
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const strings = textContent.items.map(item => item.str).join(' ');
+      const pdfjsPage = await pdf.getPage(i);
+      const textContent = await pdfjsPage.getTextContent();
+      const pdfLibPage = pages[i - 1];
 
-      if (strings.toLowerCase().includes(search)) {
-        found = true;
-        break;
+      for (const item of textContent.items) {
+        const text = item.str;
+        if (!text) continue;
+
+        const lowerText = text.toLowerCase();
+
+        // Find ALL matches in same text chunk
+        let startIndex = 0;
+        while (true) {
+          const matchIndex = lowerText.indexOf(search, startIndex);
+          if (matchIndex === -1) break;
+
+          const tx = item.transform[4];
+          const ty = item.transform[5];
+          const itemWidth = item.width;
+          const itemHeight = item.height;
+
+          // Approximate character width
+          const charWidth = itemWidth / text.length;
+
+          const wordX = tx + matchIndex * charWidth;
+          const wordWidth = search.length * charWidth;
+
+          pdfLibPage.drawRectangle({
+            x: wordX,
+            y: ty,
+            width: wordWidth,
+            height: itemHeight,
+            color: black,
+          });
+
+          drawnCount++;
+
+          startIndex = matchIndex + search.length;
+        }
       }
-    }
-
-    if (found) {
-      // Full page blackout (safe fallback)
-      pages.forEach((page) => {
-        const { width, height } = page.getSize();
-        page.drawRectangle({
-          x: 0,
-          y: 0,
-          width,
-          height,
-          color: black,
-        });
-        drawnCount++;
-      });
     }
   }
 
   if (drawnCount === 0) {
-    throw new Error('No valid redactions were applied');
+    throw new Error("No valid redactions were applied");
   }
 
-  const preFlattenPath = path.join(
+  /* =========================
+     SAVE TEMP FILE
+  ==========================*/
+
+  const tempPath = path.join(
     path.dirname(inputPath),
-    `redact-pre-${Date.now()}.pdf`
+    `redact-temp-${Date.now()}.pdf`
   );
 
-  fs.writeFileSync(preFlattenPath, await doc.save());
+  fs.writeFileSync(tempPath, await pdfDoc.save());
+
+  /* =========================
+     FLATTEN (IMPORTANT)
+  ==========================*/
 
   const finalPath = path.join(
     path.dirname(inputPath),
     `redacted-${Date.now()}.pdf`
   );
 
-  await flattenPdf(preFlattenPath, finalPath, { dpi: 300 });
+  await flattenPdf(tempPath, finalPath, { dpi: 300 });
 
   try {
-    fs.unlinkSync(preFlattenPath);
+    fs.unlinkSync(tempPath);
   } catch (_) {}
+
+  /* =========================
+     OPTIONAL PDF/A
+  ==========================*/
 
   if (convertToPdfa) {
     const result = await pdfaPdfService.convertToPdfa(finalPath, {
-      pdfaLevel: pdfaLevel || 'PDF/A-1b',
+      pdfaLevel: pdfaLevel || "PDF/A-1b",
     });
+
     return { path: result.path };
   }
 
