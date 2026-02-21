@@ -1,23 +1,28 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// 🔥 Use env first, fallback to system python
+const PYTHON = process.env.PYTHON_PATH || "python";
 
-const HARD_CODED_PYTHON = "C:\\Users\\user\\AppData\\Local\\Python\\bin\\python.exe";
-const PYTHON =
-  process.env.PYTHON_PATH ||
-  process.env.PYTHON ||
-  (fs.existsSync(HARD_CODED_PYTHON) ? HARD_CODED_PYTHON : "python");
-const ENGINE_DIR = path.join(__dirname, "..", "..", "python-engine");
+// 🔥 Resolve project root safely
+const PROJECT_ROOT = path.resolve(process.cwd(), "..");
+
+// 🔥 Python engine folder (based on your structure)
+const ENGINE_DIR = path.join(PROJECT_ROOT, "python");
+
+// 🔥 Python script
 const PROCESSOR_PATH = path.join(ENGINE_DIR, "colorblindness.py");
 
+// 🔍 Validate engine before running
 const ensureEngine = () => {
   if (!fs.existsSync(PROCESSOR_PATH)) {
-    throw new Error("Python engine not found. processor.py is missing.");
+    throw new Error(
+      `Python engine not found at ${PROCESSOR_PATH}`
+    );
   }
+
+  // If absolute python path given, validate it
   if (path.isAbsolute(PYTHON) && !fs.existsSync(PYTHON)) {
     throw new Error(`Python executable not found at ${PYTHON}`);
   }
@@ -38,20 +43,16 @@ export const runColorAccessibility = async ({
   ensureEngine();
 
   return new Promise((resolve, reject) => {
+
     const args = [
       PROCESSOR_PATH,
-      "--input",
-      inputPath,
-      "--output",
-      outputPath,
-      "--mode",
-      mode,
-      "--strength",
-      String(strength),
-      "--contrast",
-      contrast ? "true" : "false",
-      "--highlight",
-      highlight ? "true" : "false",
+      "--input", inputPath,
+      "--output", outputPath,
+      "--mode", mode,
+      "--strength", String(strength),
+      "--contrast", contrast ? "true" : "false",
+      "--highlight", highlight ? "true" : "false",
+      "--apply-all-pages", applyAllPages ? "true" : "false",
     ];
 
     if (preview) {
@@ -62,20 +63,26 @@ export const runColorAccessibility = async ({
       args.push("--metrics-output", metricsPath);
     }
 
-    args.push("--apply-all-pages", applyAllPages ? "true" : "false");
-
+    // 🔥 Spawn Python safely
     const child = spawn(PYTHON, args, {
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
       cwd: ENGINE_DIR,
+      shell: false, // important for Windows
     });
 
     let stderr = "";
+    let stdout = "";
 
+    // ⏳ Timeout protection
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
       reject(new Error("Python processing timed out"));
     }, timeoutMs);
+
+    child.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
 
     child.stderr.on("data", (data) => {
       stderr += data.toString();
@@ -83,11 +90,12 @@ export const runColorAccessibility = async ({
 
     child.on("error", (err) => {
       clearTimeout(timer);
-      reject(err);
+      reject(new Error(`Failed to start Python process: ${err.message}`));
     });
 
     child.on("close", (code) => {
       clearTimeout(timer);
+
       if (code !== 0) {
         return reject(
           new Error(stderr || `Python process failed with code ${code}`)
@@ -95,9 +103,12 @@ export const runColorAccessibility = async ({
       }
 
       let metrics = null;
+
       if (metricsPath && fs.existsSync(metricsPath)) {
         try {
-          metrics = JSON.parse(fs.readFileSync(metricsPath, "utf-8"));
+          metrics = JSON.parse(
+            fs.readFileSync(metricsPath, "utf-8")
+          );
         } catch {
           metrics = null;
         }

@@ -18,21 +18,13 @@ const allowedMimeTypes = [
 
 const normalizeMode = (mode) => {
   const raw = String(mode || "universal").toLowerCase().trim();
-  if (["deuteranopia", "red-green", "redgreen", "rg"].includes(raw)) {
-    return "deuteranopia";
-  }
-  if (["protanopia", "red", "protan"].includes(raw)) {
-    return "protanopia";
-  }
-  if (["tritanopia", "blue-yellow", "tritan"].includes(raw)) {
-    return "tritanopia";
-  }
-  if (["universal", "auto"].includes(raw)) {
-    return "universal";
-  }
-  if (["contrast", "contrast-only", "contrast_only"].includes(raw)) {
-    return "contrast";
-  }
+
+  if (["deuteranopia", "red-green", "rg"].includes(raw)) return "deuteranopia";
+  if (["protanopia", "protan"].includes(raw)) return "protanopia";
+  if (["tritanopia", "tritan"].includes(raw)) return "tritanopia";
+  if (["contrast"].includes(raw)) return "contrast";
+  if (["universal", "auto"].includes(raw)) return "universal";
+
   return "invalid";
 };
 
@@ -45,92 +37,85 @@ const toBoolean = (value) => {
 };
 
 const clampStrength = (value, fallback = 0.7) => {
-  if (value === undefined || value === null || value === "") return fallback;
+  if (!value) return fallback;
   const parsed = Number(value);
   if (Number.isNaN(parsed)) return fallback;
-  if (parsed > 1) {
-    return Math.max(0, Math.min(1, parsed / 100));
-  }
-  return Math.max(0, Math.min(1, parsed));
+
+  if (parsed > 1) return Math.min(parsed / 100, 1);
+  return Math.max(0, Math.min(parsed, 1));
 };
 
 const validateUpload = (file) => {
-  if (!file?.path) {
-    return "File is required";
-  }
+  if (!file) return "File is required";
 
   const ext = path.extname(file.originalname).toLowerCase();
-  if (!allowedExtensions.includes(ext)) {
-    return "Unsupported file type";
-  }
+  if (!allowedExtensions.includes(ext)) return "Unsupported file type";
 
-  if (file.mimetype && !allowedMimeTypes.includes(file.mimetype)) {
+  if (file.mimetype && !allowedMimeTypes.includes(file.mimetype))
     return "Unsupported MIME type";
-  }
 
   return null;
 };
 
-const buildOutputPath = (inputPath, suffix, forceExt = null) => {
-  const ext = forceExt || path.extname(inputPath);
+const buildOutputPath = (inputPath, suffix, ext) => {
   const base = `color-accessible-${suffix}-${Date.now()}`;
   return path.join(OUTPUT_DIR, `${base}${ext}`);
 };
 
-const sendFileWithCleanup = (res, filePath, cleanupList) => {
-  res.sendFile(path.resolve(filePath), (err) => {
-    cleanupPaths(cleanupList, 5000);
-    if (err) {
-      console.error(err);
-    }
-  });
-};
-
-export const processColorAccessibility = async (req, res, next) => {
+export const transformColorAccessibility = async (req, res, next) => {
   const file = req.file;
-  const validationError = validateUpload(file);
-  if (validationError) {
-    return res.status(400).json({ success: false, error: validationError });
+
+  const error = validateUpload(file);
+  if (error) {
+    return res.status(400).json({ success: false, error });
   }
 
+  // ✅ WRITE BUFFER TO TEMP FILE
+  const tempInputPath = path.join(
+    OUTPUT_DIR,
+    `temp-${Date.now()}-${file.originalname}`
+  );
+
+  await fs.promises.writeFile(tempInputPath, file.buffer);
+
+  const preview = toBoolean(req.body?.preview);
   const mode = normalizeMode(req.body?.mode);
+
   if (mode === "invalid") {
-    cleanupPaths([file.path]);
-    return res.status(400).json({
-      success: false,
-      error: "Invalid mode",
-    });
+    cleanupPaths([tempInputPath]);
+    return res.status(400).json({ success: false, error: "Invalid mode" });
   }
 
-  const strength = clampStrength(req.body?.strength ?? req.body?.intensity);
+  const strength = clampStrength(req.body?.strength);
   const contrast = toBoolean(req.body?.contrast);
   const highlight = toBoolean(req.body?.highlight);
   const applyAllPages = toBoolean(req.body?.applyAllPages ?? true);
 
   const ext = path.extname(file.originalname).toLowerCase();
-  const outputExt = ext === ".pdf" ? ".pdf" : ext;
-  const outputPath = buildOutputPath(file.path, "final", outputExt);
-  const metricsPath = buildOutputPath(file.path, "metrics", ".json");
+  const outputExt = preview ? ".png" : ext;
+
+  const outputPath = buildOutputPath(tempInputPath, preview ? "preview" : "final", outputExt);
+  const metricsPath = buildOutputPath(tempInputPath, "metrics", ".json");
 
   try {
     const result = await runColorAccessibility({
-      inputPath: file.path,
+      inputPath: tempInputPath,
       outputPath,
       mode,
       strength,
       contrast,
       highlight,
-      preview: false,
-      metricsPath,
+      preview,
       applyAllPages,
+      metricsPath,
+      timeoutMs: preview ? 2 * 60 * 1000 : undefined,
     });
 
-    if (result?.metrics) {
-      res.setHeader("X-Accessibility-Score", String(result.metrics.score));
-      res.setHeader("X-Accessibility-Issues", String(result.metrics.issues));
-      if (result.metrics.deltaE !== undefined) {
-        res.setHeader("X-Accessibility-DeltaE", String(result.metrics.deltaE));
-      }
+    if (preview) {
+      res.setHeader("Content-Type", "image/png");
+      return res.sendFile(path.resolve(outputPath), () => {
+        cleanupPaths([tempInputPath, outputPath, metricsPath], 5000);
+      });
     }
 
     res.setHeader(
@@ -138,64 +123,12 @@ export const processColorAccessibility = async (req, res, next) => {
       `attachment; filename="${path.basename(outputPath)}"`
     );
 
-    sendFileWithCleanup(res, outputPath, [file.path, outputPath, metricsPath]);
-  } catch (error) {
-    cleanupPaths([file.path, outputPath, metricsPath]);
-    next(error);
-  }
-};
-
-export const previewColorAccessibility = async (req, res, next) => {
-  const file = req.file;
-  const validationError = validateUpload(file);
-  if (validationError) {
-    return res.status(400).json({ success: false, error: validationError });
-  }
-
-  const previewType = String(req.body?.previewType || "processed").toLowerCase();
-  const mode = previewType === "original" ? "original" : normalizeMode(req.body?.mode);
-
-  if (mode === "invalid") {
-    cleanupPaths([file.path]);
-    return res.status(400).json({
-      success: false,
-      error: "Invalid mode",
-    });
-  }
-
-  const strength = clampStrength(req.body?.strength ?? req.body?.intensity);
-  const contrast = toBoolean(req.body?.contrast);
-  const highlight = toBoolean(req.body?.highlight);
-
-  const outputPath = buildOutputPath(file.path, "preview", ".png");
-  const metricsPath = buildOutputPath(file.path, "preview-metrics", ".json");
-
-  try {
-    const result = await runColorAccessibility({
-      inputPath: file.path,
-      outputPath,
-      mode,
-      strength,
-      contrast,
-      highlight,
-      preview: true,
-      metricsPath,
-      applyAllPages: true,
-      timeoutMs: 2 * 60 * 1000,
+    return res.sendFile(path.resolve(outputPath), () => {
+      cleanupPaths([tempInputPath, outputPath, metricsPath], 5000);
     });
 
-    if (result?.metrics) {
-      res.setHeader("X-Accessibility-Score", String(result.metrics.score));
-      res.setHeader("X-Accessibility-Issues", String(result.metrics.issues));
-      if (result.metrics.deltaE !== undefined) {
-        res.setHeader("X-Accessibility-DeltaE", String(result.metrics.deltaE));
-      }
-    }
-
-    res.setHeader("Content-Type", "image/png");
-    sendFileWithCleanup(res, outputPath, [file.path, outputPath, metricsPath]);
-  } catch (error) {
-    cleanupPaths([file.path, outputPath, metricsPath]);
-    next(error);
+  } catch (err) {
+    cleanupPaths([tempInputPath, outputPath, metricsPath]);
+    next(err);
   }
 };

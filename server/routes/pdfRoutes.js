@@ -10,6 +10,8 @@ import * as pdfaPdfController from '../controllers/pdfaPdfController.js';
 import { unlockPdfController } from '../controllers/unlockPdfController.js';
 import { convertPdfToPpt } from '../controllers/pdfToPPTController.js';
 import { imagesToPdfController } from '../controllers/scanToPDFController.js';
+import { runColorAccessibility } from '../services/colorblindnessPDFService.js';
+import { transformColorAccessibility } from '../controllers/colorblindnessPDFController.js';
 
 const router = express.Router();
 
@@ -49,5 +51,8 @@ router.post(
 
 
 router.post("/scan-to-pdf", uploadTemp.array("files", 20), imagesToPdfController);
+
+router.post("/colorblind-pdf", uploadTemp.single("file"), transformColorAccessibility);
+
 
 export default router;
