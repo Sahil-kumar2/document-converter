@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@pinecone-database/pinecone": "^7.1.0",
     "archiver": "^7.0.1",
     "archiver-zip-encrypted": "^2.0.0",
+    "axios": "^1.13.6",
     "xlsx": "^0.18.5"
   }
 }

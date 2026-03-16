@@ -41,14 +41,17 @@ export default function ToolPageLayout({
   const handleDownload = () => {
     if (!resultBlob || !result?.fileName) return
 
-    const url = window.URL.createObjectURL(resultBlob)
-    const a = document.createElement('a')
-    a.href = url
+    // Use the blob directly — do NOT re-wrap it
+    // (axios responseType:"blob" already returns a properly typed Blob)
+    const a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
     a.download = result.fileName
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    a.rel = 'noopener'
+    a.href = URL.createObjectURL(resultBlob)
+
+    // Revoke after 40 seconds (generous time for large files)
+    setTimeout(() => URL.revokeObjectURL(a.href), 40000)
+    // Click on next event loop tick (file-saver.js pattern)
+    setTimeout(() => a.click(), 0)
   }
 
   return (

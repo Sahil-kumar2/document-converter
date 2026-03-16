@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadPdfWithWatermark, normalizePdfFile } from '../middleware/multerconfig.js';
+import { uploadPdfWithWatermark,uploadSinglePdf, normalizePdfFile } from '../middleware/multerconfig.js';
 import * as splitPdfController from '../controllers/splitPdfController.js';
 import * as cropPdfController from '../controllers/cropPdfController.js';
 import * as extractPdfController from '../controllers/extractPdfController.js';
@@ -7,6 +7,8 @@ import * as rotatePdfController from '../controllers/rotatePdfController.js';
 import * as watermarkPdfController from '../controllers/watermarkPdfController.js';
 import * as redactPdfController from '../controllers/redactPdfController.js';
 import * as pdfaPdfController from '../controllers/pdfaPdfController.js';
+import { unlockPdfController } from '../controllers/unlockPdfController.js';
+import { editPdfController } from '../controllers/editPdfController.js';
 
 const router = express.Router();
 
@@ -30,5 +32,22 @@ router.post('/redact', uploadPdfWithWatermark, normalizePdfFile, redactPdfContro
 
 // POST /api/pdf/pdfa — pdfaLevel (PDF/A-1b, PDF/A-2b, PDF/A-3b)
 router.post('/pdfa', uploadPdfWithWatermark, normalizePdfFile, pdfaPdfController.convertToPdfa);
+
+// ✅ NEW: POST /api/pdf/unlock
+router.post(
+  '/unlock',
+  uploadSinglePdf,
+  normalizePdfFile,
+  unlockPdfController
+);
+
+// ✅ NEW: POST /api/pdf/edit
+router.post(
+  '/edit',
+  uploadSinglePdf,
+  normalizePdfFile,
+  editPdfController
+);
+
 
 export default router;

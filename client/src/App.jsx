@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { convertFile, getErrorMessage } from "./api";
+import { useState, useEffect } from "react";
+import { convertFile, getErrorMessage, logVisit } from "./api";
 import FileUpload from "./components/FileUpload";
 import ConversionOptions from "./components/ConversionOptions";
 import ResultPreview from "./components/ResultPreview";
@@ -15,6 +15,10 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [resultBlob, setResultBlob] = useState(null);
   const [activeTab, setActiveTab] = useState("convert");
+
+  useEffect(() => {
+    logVisit();
+  }, []);
 
   const conversionRules = {
     pdf: ["docx", "xlsx", "png", "jpg", "html", "pptx", "ppt"],
@@ -72,8 +76,8 @@ export default function App() {
         files.length > 1
           ? "converted-files.zip"
           : ext === "pdf" && ["png", "jpg", "jpeg"].includes(format)
-          ? "pages.zip"
-          : `converted.${format}`;
+            ? "pages.zip"
+            : `converted.${format}`;
 
       setResult({
         success: true,
@@ -150,11 +154,10 @@ export default function App() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
-                activeTab === tab.id
+              className={`px-6 py-3 rounded-lg font-semibold transition whitespace-nowrap ${activeTab === tab.id
                   ? "bg-blue-600 text-white shadow-lg"
                   : "bg-slate-700 text-gray-300 hover:bg-slate-600"
-              }`}
+                }`}
             >
               {tab.name}
             </button>

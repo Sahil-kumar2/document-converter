@@ -60,7 +60,7 @@ export const splitPdf = async (pdfFile, mode, ranges = null, mergeAll = false) =
   formData.append("pdfFile", pdfFile);
   formData.append("mode", mode);
   formData.append("mergeAll", mergeAll.toString());
-  
+
   if (ranges && Array.isArray(ranges)) {
     formData.append("ranges", JSON.stringify(ranges));
   }
@@ -102,14 +102,14 @@ export const extractPdf = async (pdfFile, pageNumbers) => {
 export const rotatePdf = async (pdfFile, rotationData, pageNumbers = null) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  
+
   // Support both new map format and legacy single angle
   if (typeof rotationData === 'object' && !Array.isArray(rotationData)) {
     formData.append("pageRotations", JSON.stringify(rotationData));
   } else {
     formData.append("rotationAngle", rotationData);
   }
-  
+
   if (pageNumbers) {
     formData.append("pageNumbers", pageNumbers);
   }
@@ -139,7 +139,7 @@ export const cropPdf = async (pdfFile, x, y, width, height, mode = null, pageNum
   formData.append("cropY", y);
   formData.append("cropWidth", width);
   formData.append("cropHeight", height);
-  
+
   // Support new mode-based format
   if (mode) {
     formData.append("mode", mode);
@@ -147,7 +147,7 @@ export const cropPdf = async (pdfFile, x, y, width, height, mode = null, pageNum
       formData.append("pageNumber", pageNumber);
     }
   }
-  
+
   // Legacy support for pageNumbers
   if (pageNumbers) {
     formData.append("pageNumbers", pageNumbers);
@@ -229,12 +229,12 @@ export const redactPdf = async (
 ) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  
+
   // If redactions array is provided, stringify and send as redactAreas
   if (redactions && redactions.length > 0) {
     formData.append("redactAreas", JSON.stringify(redactions));
   }
-  
+
   if (redactText) formData.append("redactText", redactText);
   if (pageNumbers) formData.append("pageNumbers", pageNumbers);
 
@@ -274,7 +274,7 @@ export const convertToPdfa = async (pdfFile, pdfaLevel = "PDF/A-2b") => {
 export const addPageNumbers = async (pdfFile, options = {}) => {
   const formData = new FormData();
   formData.append("pdfFile", pdfFile);
-  
+
   if (options.position) formData.append("position", options.position);
   if (options.margin) formData.append("margin", options.margin);
   if (options.startPage !== undefined) formData.append("startPage", options.startPage);
@@ -484,6 +484,54 @@ export const signPdf = async (pdfFile, payload = {}) => {
   });
 };
 
+
+/**
+ * Unlock password-protected PDF
+ * @param {File} pdfFile - PDF file to unlock
+ * @param {{ password: string }} payload
+ * @returns {Promise<Blob>} - Unlocked PDF file
+ */
+export const unlockPdf = async (pdfFile, payload = {}) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+
+  if (payload.password) {
+    formData.append("password", payload.password);
+  }
+
+  try {
+    const response = await apiClient.post(
+      "/api/pdf/unlock",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        responseType: "blob",
+      }
+    );
+
+    return response;
+
+  } catch (error) {
+
+    // 🔥 IMPORTANT FIX
+    if (error.response?.data instanceof Blob) {
+      const text = await error.response.data.text();
+
+      try {
+        const json = JSON.parse(text);
+        throw new Error(json.error || "Failed to unlock PDF");
+      } catch {
+        throw new Error("Failed to unlock PDF");
+      }
+    }
+
+    throw error;
+  }
+};
+
+
 /**
  * Organize PDF (reorder or remove pages)
  * @param {File} pdfFile - PDF file
@@ -528,6 +576,38 @@ export const lockDocument = async (pdfFile, password) => {
   });
 };
 
+
+/**
+ * Edit PDF (Add text elements, future shapes/images support)
+ * @param {File} pdfFile - PDF file
+ * @param {Array} elements - Array of edit elements
+ * Example:
+ * [
+ *   {
+ *     type: "text",
+ *     text: "Hello World",
+ *     x: 100,
+ *     y: 500,
+ *     size: 20,
+ *     page: 0
+ *   }
+ * ]
+ * @returns {Promise<Blob>} - Edited PDF file
+ */
+export const editPdf = async (pdfFile, elements = []) => {
+  const formData = new FormData();
+  formData.append("pdfFile", pdfFile);
+  formData.append("elements", JSON.stringify(elements));
+
+  return apiClient.post("/api/pdf/edit", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    responseType: "blob",
+  });
+};
+
+
 // ============================================================
 // Error Handling Utility
 // ============================================================
@@ -548,6 +628,38 @@ export const getErrorMessage = (error) => {
     return error.message;
   }
   return "An error occurred. Please try again.";
+};
+
+// ============================================================
+// AI CHATBOT API
+// ============================================================
+
+/**
+ * Send a message to the AI chatbot
+ * @param {string} message - User's message
+ * @param {Array} history - Conversation history [{role, content}]
+ * @returns {Promise<Object>} - { reply }
+ */
+export const sendChatMessage = async (message, history = []) => {
+  const response = await apiClient.post("/api/chatbot/chat", {
+    message,
+    history,
+  });
+  return response.data;
+};
+
+/**
+ * Log a user visit (to capture IP)
+ * @returns {Promise<Object>}
+ */
+export const logVisit = async () => {
+  try {
+    const response = await apiClient.get("/api/visit");
+    return response.data;
+  } catch (error) {
+    console.error("Failed to log visit:", error);
+    return null;
+  }
 };
 
 export default apiClient;

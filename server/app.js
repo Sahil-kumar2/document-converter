@@ -14,14 +14,18 @@ import removePagesRoutes from "./routes/removePagesRoutes.js";
 import repairPdfRoutes from "./routes/repairPdfRoutes.js";
 import routesIndex from "./routes/index.js";
 import lockDocRoute from "./routes/lockDocumentRoutes.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
+// Trust reverse proxy (Render, Nginx, etc.) so req.ip and x-forwarded-for work correctly
+app.set('trust proxy', true);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173","http://localhost:5174","https://document-converter-06yv.onrender.com"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "https://document-converter-06yv.onrender.com"],
     exposedHeaders: ["Content-Disposition", "X-Original-Size", "X-Compressed-Size"]
   })
 );
@@ -40,6 +44,7 @@ app.use("/api/pdf", removePagesRoutes);
 app.use("/api/pdf", repairPdfRoutes);
 app.use("/api", routesIndex);
 app.use("/api", lockDocRoute);
+app.use("/api/chatbot", chatbotRoutes);
 app.use(errorHandler);
 
 app.listen(process.env.PORT, () =>

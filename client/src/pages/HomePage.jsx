@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { logVisit } from '../api'
 
 export default function HomePage() {
+  useEffect(() => {
+    logVisit();
+  }, []);
+
   const pdfTools = [
     { name: 'Sign PDF', icon: '✍️', route: '/sign-pdf', desc: 'Add signature to PDF' },
     { name: 'Protect PDF', icon: '🔒', route: '/protect-pdf', desc: 'Password protect PDF' },
+    { name: 'Unlock PDF', icon: '🔓', route: '/unlock-pdf', desc: 'Remove PDF password' },
     { name: 'Organize PDF', icon: '📑', route: '/organize-pdf', desc: 'Reorder pages' },
     { name: 'Compress PDF', icon: '📦', route: '/compress-pdf', desc: 'Reduce file size' },
     { name: 'Merge PDFs', icon: '🔗', route: '/merge-pdf', desc: 'Combine multiple PDFs' },
@@ -17,6 +24,7 @@ export default function HomePage() {
     { name: 'Redact PDF', icon: '🖍️', route: '/redact-pdf', desc: 'Hide sensitive info' },
     { name: 'Repair PDF', icon: '🔧', route: '/repair-pdf', desc: 'Fix corrupted PDF' },
     { name: 'Convert to PDF/A', icon: '📋', route: '/pdf-to-pdfa', desc: 'Archival format' },
+    { name: 'Edit PDF', icon: '✏️', route: '/edit-pdf', desc: 'Add and edit text' },
   ]
 
   const imageTools = [

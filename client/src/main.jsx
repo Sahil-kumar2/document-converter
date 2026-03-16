@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 // PDF Tools
 import SignPdfPage from './pages/tools/SignPdfPage'
 import ProtectPdfPage from './pages/tools/ProtectPdfPage'
+import UnlockPdfPage from './pages/tools/UnlockPdfPage';
 import OrganizePdfPage from './pages/tools/OrganizePdfPage'
 import CompressPdfPage from './pages/tools/CompressPdfPage'
 import MergePdfPage from './pages/tools/MergePdfPage'
@@ -21,6 +22,7 @@ import RedactPdfPage from './pages/tools/RedactPdfPage'
 import RepairPdfPage from './pages/tools/RepairPdfPage'
 import PdfaToPdfPage from './pages/tools/PdfaToPdfPage'
 import AddPageNumbersPage from './pages/tools/AddPageNumbersPage'
+import EditPdfPage from "./pages/tools/EditPdfPage";
 
 // Image Tools
 import BlackWhitePage from './pages/tools/BlackWhitePage'
@@ -42,6 +44,7 @@ import PdfToHtmlPage from './pages/tools/PdfToHtmlPage'
 import HtmlToPdfPage from './pages/tools/HtmlToPdfPage'
 import PdfToPptPage from './pages/tools/PdfToPptPage'
 import XlsxToPdfPage from "./pages/tools/XlsxToPdfPage.jsx";
+import ChatbotWidget from "./components/ChatbotWidget.jsx";
 
 
 createRoot(document.getElementById('root')).render(
@@ -50,10 +53,11 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/legacy" element={<App />} />
-        
+
         {/* PDF Tools */}
         <Route path="/sign-pdf" element={<SignPdfPage />} />
         <Route path="/protect-pdf" element={<ProtectPdfPage />} />
+        <Route path="/unlock-pdf" element={<UnlockPdfPage />} />
         <Route path="/organize-pdf" element={<OrganizePdfPage />} />
         <Route path="/compress-pdf" element={<CompressPdfPage />} />
         <Route path="/merge-pdf" element={<MergePdfPage />} />
@@ -67,7 +71,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/repair-pdf" element={<RepairPdfPage />} />
         <Route path="/pdf-to-pdfa" element={<PdfaToPdfPage />} />
         <Route path="/add-page-numbers" element={<AddPageNumbersPage />} />
-        
+        <Route path="/edit-pdf" element={<EditPdfPage />} />
+
         {/* Image Tools */}
         <Route path="/black-white-image" element={<BlackWhitePage />} />
         <Route path="/image-to-text" element={<ImageToTextPage />} />
@@ -77,7 +82,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/jpg-to-pdf" element={<JpgToPdfPage />} />
         <Route path="/webp-to-jpg" element={<WebpToJpgPage />} />
         <Route path="/webp-to-png" element={<WebpToPngPage />} />
-        
+
         {/* Quick Converts */}
         <Route path="/pdf-to-docx" element={<PdfToDocxPage />} />
         <Route path="/docx-to-pdf" element={<DocxToPdfPage />} />
@@ -89,6 +94,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/pdf-to-pptx" element={<PdfToPptPage />} />
         <Route path="/xlsx-to-pdf" element={<XlsxToPdfPage />} />
       </Routes>
+      <ChatbotWidget />
     </BrowserRouter>
   </StrictMode>,
 )
+
